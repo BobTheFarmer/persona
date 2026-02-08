@@ -1,0 +1,163 @@
+We still have a massive Preview vs Published mismatch AFTER your “parity fixes.” Stop adding surface-level diagnostics. Find the real root cause and fix it so Published matches Preview 1:1. Do whatever you have to do, but keep the app’s features the same.
+
+NON-NEGOTIABLE: Published must display the same seeded/demo experience as Preview (clubs, events, friends, map overlays, event history, images). Right now Published is clearly running a different “mode” or data path.
+
+Step 0 — Treat this like a production incident
+
+Create a single “source of truth” runtime report and make the app prove it’s using the same:
+
+code version
+
+database
+
+seed state
+
+auth/demo mode
+
+asset bundle
+
+If any of these differ between Preview and Published, we fix that difference. No guessing.
+
+Step 1 — Add HARD EVIDENCE logging (server + client)
+1A) Server: add GET /api/debug/parity-report (NO auth required)
+
+Return JSON with:
+
+commit / buildId / timestamp (inject at build time; if not possible, use package.json version + server start time)
+
+nodeEnv
+
+isPublished (whatever reliable env Replit provides)
+
+databaseFingerprint:
+
+host, db name (sanitized), and ALSO SELECT current_database(), inet_server_addr(), inet_server_port(), version()
+
+seedFingerprint:
+
+counts: users, taste_profiles, items, events, event_rsvps, friendships, interactions
+
+sample IDs: first 3 users, first 3 events, first 3 items
+
+ensure at least one known seed user exists (e.g., “Andy Chen”) and report boolean hasAndyChen
+
+demoModeFlags:
+
+DEMO_BYPASS_AUTH
+
+any other gating flags affecting seeding/demo data
+
+assetsServing:
+
+absolute path you are serving static assets from
+
+list first 10 filenames in dist/public/assets (if exists), and whether club-images keys are present
+
+1B) Client: on app load in Published, fetch /api/debug/parity-report and render a small “Parity Badge” in footer:
+
+Shows commit, db fingerprint, seed counts, hasAndyChen
+This must render in BOTH Preview and Published.
+
+Goal: In 60 seconds we can see if Published is using a different DB, not seeded, wrong bundle, or wrong flags.
+
+Step 2 — The actual likely root cause(s) (fix them)
+
+Based on symptoms (missing history, “?” users, same images, map missing controls/overlays), the #1 suspect is that Published is NOT using the same database / seed state, OR Published is not running seed/reset logic, OR the published server is not serving the updated client bundle.
+
+You must check and then fix the culprit, not patch around it.
+
+2A) Enforce ONE database across Preview + Published
+
+If parity-report shows different DB host/name between preview and published:
+
+Fix environment config so Published uses the exact same DATABASE_URL as Preview.
+
+If Replit uses different env sets for deploy, explicitly wire DATABASE_URL in Deploy settings.
+
+Add a startup log line: “DB_FINGERPRINT=…” and make it match.
+
+2B) Guarantee seed/demo data exists in Published every startup (idempotent)
+
+If counts are low or hasAndyChen=false on Published:
+
+Make seedDatabase() ALWAYS run on server startup (both dev and prod), idempotently.
+
+If seeding is async, block server “ready” until seeding completes to avoid first-load empty caches.
+
+Add a SEED_VERSION constant. Store in DB table app_meta(seed_version text, seeded_at timestamp).
+
+On startup: if seed_version != current, run seed (upsert), then set seed_version.
+This prevents “published didn’t seed” forever problems.
+
+2C) Fix “Published is serving old frontend bundle”
+
+If parity-report commit/buildId differs from Preview OR dist asset list doesn’t include latest:
+
+Ensure publish pipeline runs npm ci + npm run build for BOTH client and server.
+
+Ensure Express serves from the correct output folder:
+
+dist/public (or whatever Vite build outputs)
+
+Hard fail startup if the expected dist assets folder is missing in production.
+
+Remove any stale caching serving old index.html.
+
+Add cache headers ONLY for hashed assets; set index.html to no-store.
+
+2D) Fix “images fallback in prod”
+
+If Published shows same image everywhere:
+
+Verify keys in returned data match the image map keys.
+
+Verify images are imported statically (no dynamic require).
+
+Verify assets exist in dist and network requests succeed.
+
+Add a dev-only overlay on images showing imageKey + load status (200/404).
+This is how we stop guessing.
+
+2E) Fix “map controls/options missing on mobile/published”
+
+If parity-report shows map-data counts fine but UI shows 5 circles:
+
+It’s a CSS/layout build difference:
+
+Ensure Tailwind content paths include ALL TSX files (published build might be purging classes).
+
+Confirm tailwind.config content glob includes client/src/**/*.{ts,tsx}.
+
+Ensure any dynamic classnames used for map controls are safelisted.
+This is a classic “works in dev, broken in prod” cause.
+
+Step 3 — Stop caching empty responses
+
+If Published briefly loads before seed/auth and caches empties:
+
+In React Query, NEVER cache “empty because not ready” forever.
+
+Add:
+
+enabled: !!user for user-dependent queries
+
+reasonable staleTime and retry
+
+invalidate queries after demo/reset / after auth completes
+But do this ONLY after seeding/auth is proven correct.
+
+Step 4 — Deliverables (must do all)
+
+Post a short incident report in code comments or DEPLOYMENT.md:
+
+What was root cause? (DB mismatch / seed not running / stale bundle / tailwind purge / etc.)
+
+Evidence: parity-report before vs after.
+
+After fix, provide screenshots/log outputs showing:
+
+parity-report matches between Preview and Published (same db fingerprint + seed counts + buildId)
+
+clubs/events/friends/map all match visually.
+
+Implement now. Don’t ask me questions—inspect parity-report and fix the real culprit.

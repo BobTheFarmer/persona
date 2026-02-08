@@ -1,0 +1,65 @@
+Write a complete, no-word-limit ARCHITECTURE.md that documents EVERYTHING about this app end-to-end. Treat it like the definitive technical + product spec for judges and future developers. Do not be brief. Do not handwave. Do not omit any subsystem. If something exists in the codebase, it must appear in this document.
+
+Hard requirements:
+
+Enumerate EVERY technology/library/framework used (frontend + backend + database + auth + ML/AI + vector search + maps/geo + UI libs + build tooling). For each: what it is, why we chose it, what it does in our app, where it lives in the code.
+
+Document EVERY major folder and key file (client, server, shared, schema, routes, seed, ML/embedding code, hybrid engine, map logic). For each: responsibilities and how it interacts with others.
+
+Document EVERY API endpoint (method + route + params + query params + response shape + what data it reads/writes). Include the demo/debug endpoints too.
+
+Document EVERY database table and every column (including embeddings vectors, geo lat/lng, club fields like meeting info/dues/links, RSVP tables, interactions, profiles, sessions/users). Explain indexing strategy and constraints.
+
+Document the FULL AI/ML pipeline in a way judges can understand in 30 seconds, then go deep technically:
+
+Local embeddings model used (Node-based), embedding dimension, what text is embedded for clubs/events/users, caching, backfill, health checks.
+
+Hybrid scoring: exact formula and weights, what signals exist (embedding similarity + collaborative filtering + trait explainability), how fallbacks work, how scoringMethod/fallbackReason are decided.
+
+Explainability: how the “AI why” line is generated, how the long tooltip explanation is formed, and what the “match math” tooltip shows.
+
+VERY IMPORTANT: Document the behavior-learning loop:
+
+When a user likes/loves/saves/views/skips a club or event, we update their personality/taste profile.
+
+Explicitly explain how interactions boost or reduce specific trait axes (e.g., “like boosts novelty/cozy/etc depending on the item’s traits”), including the weights used (love=2.0, save=1.5, like=1.0, view=0.3, skip=-0.5) and how that propagates into: (a) taste_traits, (b) taste_embedding recompute.
+
+If the code uses recomputeTasteEmbedding from ALL interactions, explain the exact aggregation math (weighted average of item embeddings, normalization, decay if present, etc).
+
+If the code updates trait vector based on liked item trait vector, spell it out: formula, clamping, smoothing factor, and how it affects future recommendations.
+
+Document the user flows with step-by-step sequences:
+
+Auth/login, onboarding (major/year/personality quiz), profile creation, clubs discovery (match vs urgency), events discovery (persona + mutuals + urgency), RSVP, attendee matching, friends tab (my friends + find friends scrolling), profile viewing (own vs others), event history, mutuals, Instagram links, maps/hotspots tab behavior.
+
+Document UI architecture:
+
+Tabs, routing, data fetching (react-query), components, scroller behavior, tooltip behavior, mobile/desktop differences, theme backgrounds.
+
+Document seeding/demo strategy:
+
+Seed data types (clubs, events, users), how demo/reset works, how it ensures embeddings exist, how it sets RSVP/attendees, how it ensures the demo user has a profile.
+
+Include a “How to Run” section: local dev, env vars/secrets, database setup, migrations, backfill embeddings, common troubleshooting.
+
+Include “Judge Proof Checklist” section: which endpoints prove ML is working, which UI hovers show explainability, what to click in 60 seconds.
+
+Include code snippets throughout (short, relevant) to prove claims. Pull real function names from the repo and reference the exact file paths.
+
+Do NOT fabricate functions. You must scan the repository and list actual exported functions/classes and the key internal helpers. If there are too many, list all server-side functions in: routes, storage, embedding service, hybrid engine, urgency helpers, maps logic. For each function: 1–2 lines of purpose + where called.
+
+The final ARCHITECTURE.md should be extremely structured with a table of contents, headings, diagrams in ASCII if helpful, and be visually readable.
+
+Process:
+
+First, read and index the repo structure (client/, server/, shared/, schema, seed, embeddings, hybrid-engine, routes, maps page).
+
+Then write ARCHITECTURE.md from scratch with the above structure.
+
+Ensure no gaps: if a concept appears in UI, there must be a backend + DB + explanation section (or explicitly state it’s frontend-only).
+
+After writing, quickly self-audit: confirm every endpoint, every table, and every major function is included.
+
+Output:
+
+Create/overwrite ARCHITECTURE.md with the full essay.

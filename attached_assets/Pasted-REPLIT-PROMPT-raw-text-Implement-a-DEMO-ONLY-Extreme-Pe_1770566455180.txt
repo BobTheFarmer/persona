@@ -1,0 +1,126 @@
+REPLIT PROMPT (raw text)
+
+Implement a DEMO-ONLY “Extreme Persona” toggle for the current user (seed-garv / Garv Puri) that forces high-contrast trait values and recomputes the ML profile so every tab changes immediately (Clubs, Events, Find Friends, Explore/Hotspots). Add the toggle to the top-left Persona logo menu (same menu that opens About, Retake Quiz, etc). This must NOT affect other users, only the current logged-in user.
+
+GOALS
+
+Fix the “everything is 50–60%” problem by letting us instantly switch Garv into an extreme profile: a few traits 0.85–0.95, some 0.10–0.30.
+
+This must propagate through the entire ML pipeline:
+
+taste_profiles trait axes update
+
+clusters update
+
+taste embedding recomputed using our existing local embedding pipeline
+
+recommendations / events / friends change noticeably after toggle
+
+This is for demo: keep it behind a flag (DEMO_MODE=true or NODE_ENV !== "production") or only allow for seed-garv.
+
+BACKEND CHANGES
+
+Add a boolean column to taste_profiles: isExtremeDemo (default false).
+
+Create a new API endpoint:
+POST /api/demo/toggle-extreme
+
+Auth required (or demoAuth if you already have bypass)
+
+If current userId is not seed-garv (or DEMO_MODE not enabled), return 403.
+
+Toggle taste_profiles.isExtremeDemo.
+
+When turning ON extreme mode, overwrite the 8 trait values with an extreme preset for Garv, e.g.:
+novelty 0.90
+intensity 0.78
+cozy 0.18
+strategy 0.88
+social 0.62
+creativity 0.92
+nostalgia 0.22
+adventure 0.94
+(Pick a coherent archetype like “Innovator Adventurer”.)
+
+When turning OFF extreme mode:
+
+Restore to “normal” by re-running the same onboarding-derived trait builder (if available) OR revert to 0.5 baseline OR store a backup snapshot in taste_profiles.normalTraits JSON before overwriting and restore from that.
+
+Do not delete user interactions.
+
+After toggling traits:
+
+Recompute topClusters based on the new trait vector (same logic you already use).
+
+Recompute the user’s taste embedding deterministically using the existing local embedding logic (all-MiniLM-L6-v2):
+
+Use a text prompt derived from traits + major/year + top clusters + liked clubs (if any), then embed it.
+
+Or call the existing recomputeTasteEmbedding(userId) that aggregates interactions; BUT if there are no interactions yet, derive an embedding from the trait/profile text so the embedding exists immediately.
+
+Return:
+{ isExtremeDemo, traits, topClusters }
+
+Make sure all ranking endpoints already using taste embedding immediately reflect the change without requiring server restart:
+
+/api/recommendations/:domain
+
+/api/events and /api/events/for-you
+
+/api/social/matches and /api/friends/suggestions
+
+/api/explore/map-data if it uses personaScore
+
+Add one debug endpoint to prove it:
+GET /api/debug/profile-summary
+Return current user’s trait values, clusters, isExtremeDemo, and whether tasteEmbedding exists + dimension. This is judge-proof.
+
+FRONTEND CHANGES
+
+In the Persona logo dropdown menu (top-left), add a new menu item visible only in demo:
+
+Label: “Toggle Extreme Persona (Demo)”
+
+On click:
+
+Call POST /api/demo/toggle-extreme
+
+Then hard refresh the relevant React Query caches so UI updates immediately:
+
+invalidate /api/taste-profile
+
+invalidate /api/recommendations/*
+
+invalidate /api/events*
+
+invalidate /api/social/*
+
+invalidate /api/friends*
+
+invalidate /api/explore/map-data
+
+Show a small toast: “Extreme Persona ON/OFF”
+
+On the Profile page, show a tiny badge near the name when enabled: “DEMO: Extreme Mode”
+
+Do not redesign anything else.
+
+IMPORTANT CONSTRAINTS
+
+Do not change existing tab structure or layouts.
+
+Do not break production auth flows.
+
+Keep the change self-contained and reversible.
+
+Ensure match scores become more spread out (greens and greys appear) after toggle.
+
+TEST STEPS
+
+Run POST /api/demo/reset
+
+Load Clubs: observe rankings
+
+Toggle Extreme Persona ON: Clubs, Events, Find Friends rankings change strongly and match scores become more polarized
+
+Toggle OFF: returns to normal behavior

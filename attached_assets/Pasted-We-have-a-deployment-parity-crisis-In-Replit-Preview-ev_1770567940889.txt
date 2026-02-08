@@ -1,0 +1,195 @@
+We have a deployment parity crisis. In Replit Preview everything is correct. In the Published site, multiple pages regress: missing attended events on Home, repeated/fallback images for clubs/events, Friends list shows “?”, Map loses most overlays/options (only ~5 circles), and overall behavior is buggy. Your job: make the Published site behave EXACTLY like Preview, with proof. Do NOT add new features. This is a stability + build/deploy correctness fix.
+
+GOAL (non-negotiable)
+Published build must match Preview UI + data + images + routes 1:1 for:
+
+Home/Profile (event history present)
+
+Clubs (unique images per card)
+
+Events (unique images per card)
+
+Friends (real seeded users rendered, no “?”)
+
+Explore/Map (all toggles/options/overlays visible, not just 5 circles)
+
+A) FIRST: IDENTIFY WHY PREVIEW ≠ PUBLISHED (must produce evidence)
+
+Log environment + build mode in BOTH preview and production:
+
+Add a small banner in the UI footer (dev-only visible) that prints:
+
+process.env.NODE_ENV
+
+process.env.REPLIT_DEPLOYMENT / or any “deployment mode” env
+
+API base URL being used by frontend
+
+build timestamp/commit hash (inject at build time)
+This is to prove we’re running the same code/config.
+
+Verify backend is actually running on Published:
+
+Add an endpoint GET /api/debug/runtime that returns:
+
+NODE_ENV
+
+app version/build timestamp
+
+db connection host (Neon)
+
+counts: users/items/events/RSVPs/friendships
+Then in the frontend, on app load in Published, call it once and console.log it (dev-only).
+We need to confirm Published is not pointing to a different DB or not seeding.
+
+Confirm Published is not using stale bundle:
+
+Ensure the publish pipeline rebuilds client assets (Vite build) and server serves the correct dist folder.
+
+Verify Express serves the same built assets that preview uses.
+
+B) FIX MOST LIKELY ROOT CAUSES (do these systematically)
+These issues scream: different environment variables / different database / missing seeding in prod / static asset path issues / broken image mapping when bundled.
+
+Database mismatch or seeding not running in Published
+Symptoms: missing attended events, friends show “?”, map has fewer markers.
+Actions:
+
+Confirm Published reads the same DATABASE_URL as Preview (log sanitized host/db name).
+
+Ensure seedDatabase() runs on server startup in production as well (idempotent). If currently gated behind dev checks, remove that gate.
+
+Add an explicit admin-only endpoint POST /api/admin/ensure-seeded that:
+
+runs seedDatabase() idempotently
+
+returns counts inserted/updated
+This is for debugging parity only; keep behind DEMO_MODE or require auth.
+
+Auth/session differences causing “no data”
+If Published treats you as unauthenticated or as a different user, you’ll see empty history and weird “?”.
+Actions:
+
+Ensure auth callback URLs + cookie settings work in Published:
+
+trust proxy
+
+secure cookies behind HTTPS
+
+correct session store table
+
+Add a visible “logged in as X” display (small) in header for debugging to confirm same user in Preview/Published.
+
+Confirm DEMO_BYPASS_AUTH (if used) is consistent; do NOT rely on it in Published unless explicitly enabled.
+
+Static image / asset bundling issue (most obvious: same pictures everywhere)
+Likely: dynamic require/import paths break in production and fall back to default image.
+Actions:
+
+Audit image mapping files (club-images.ts, event-images.ts, item-images.ts):
+
+Ensure every used image key maps to a real imported asset.
+
+Ensure keys match seed data exactly.
+
+Avoid runtime dynamic imports like require(\...${key}`)` which can break in Vite build.
+
+Use explicit static imports for every image asset and a deterministic map object.
+
+Add a dev-only “missing image key” warning overlay on card if it falls back, so we can see what’s missing in Published.
+
+Confirm assets are included in build output and served correctly (network tab: 200 not 404).
+
+Frontend API base URL / CORS / routing mismatch
+If Published frontend is calling the wrong base URL, it may fail silently and render placeholders (question marks).
+Actions:
+
+Ensure frontend uses relative /api/... calls everywhere (no hardcoded localhost).
+
+Confirm the Express server serves both API + static assets on same origin in production.
+
+Add global fetch error logging: if any /api/* call fails, show a small toast in dev mode with status code + endpoint.
+
+Map page differences (only 5 circles)
+Likely: map-data endpoint returns less in Published due to auth/db mismatch or feature flags.
+Actions:
+
+Compare /api/explore/map-data response in Preview vs Published:
+
+Add a debug button (dev-only) “Dump Map Data Counts” that prints:
+
+numEvents, numClubs, numHotspots, numFriendsOverlays
+
+Ensure map rendering isn’t gated by screen size or window checks that behave differently in production.
+
+Ensure Leaflet/CSS assets load in Published (Leaflet CSS missing can break layers/controls).
+
+Verify leaflet CSS is imported in a stable way (in main.tsx or explore.tsx).
+
+Verify map container height is set in production CSS too.
+
+C) “PROOF” REQUIREMENT (must implement)
+We need a parity verification checklist + automated smoke test:
+
+Add a /about or /debug page (dev-only, hidden link) called “Deployment Parity Check” that runs these checks and displays pass/fail:
+
+Auth status (user loaded)
+
+/api/debug/runtime counts (users/items/events/rsvps)
+
+Sample fetch:
+
+clubs: GET /api/recommendations/academic (expects 10+)
+
+events: GET /api/events (expects >10)
+
+friends: GET /api/social/matches or /api/friends (expects >5)
+
+map: GET /api/explore/map-data (expects non-trivial counts)
+
+Image integrity check:
+
+verify at least N distinct imageUrl keys in returned clubs/events
+
+attempt to load first 10 images and ensure no 404
+Show the results as a simple table of green checks.
+
+Add a one-command script/runbook in ARCHITECTURE.md (or DEPLOYMENT.md):
+
+Steps to publish
+
+How to run parity check after publish
+
+Expected counts
+
+Where to look if mismatch happens
+
+D) DO NOT CHANGE UI/FEATURES
+Only fix deployment parity:
+
+env vars
+
+seeding/idempotency
+
+API base URLs
+
+asset bundling
+
+auth cookies
+
+leaflet CSS/assets
+
+remove silent failures
+
+E) DELIVERABLES
+When done, provide:
+
+A short written “Root cause(s) found” with evidence (logs/endpoint outputs).
+
+A list of code changes made.
+
+A “Parity Check” screen showing all green in Published.
+
+Confirm Published now matches Preview on the 5 pages listed.
+
+Implement now.

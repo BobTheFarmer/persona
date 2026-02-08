@@ -1,0 +1,437 @@
+import { type TasteProfile, type Item, type Hobby, type Event, TRAIT_AXES, getMatchColor } from "@shared/schema";
+import {
+  computeCosineSimilarity,
+  cosineSimilarityToScore,
+  isValidEmbedding,
+  findSimilarItemsByDomain,
+  findSimilarByEmbedding,
+  haversineDistance,
+  getDistanceBucket,
+} from "./embeddings";
+import { getTraitsFromProfile, computeMatchScore as traitMatchScore, computeItemMatchScore as traitItemMatchScore, computeHobbyMatch as traitHobbyMatch } from "./taste-engine";
+import { getEmbeddingNeighborCF } from "./collaborative-filtering";
+
+export type ScoringMethod = "embedding" | "hybrid" | "trait_fallback";
+
+export type FallbackReason =
+  | "missing_user_embedding"
+  | "missing_item_embedding"
+  | "missing_both_embeddings"
+  | "invalid_embedding_dim"
+  | null;
+
+const WEIGHTS = {
+  VECTOR_SIM: 0.55,
+  COLLAB_FILTER: 0.25,
+  TRAIT_EXPLAIN: 0.20,
+};
+
+const EXTREME_WEIGHTS = {
+  VECTOR_SIM: 0.70,
+  COLLAB_FILTER: 0.20,
+  TRAIT_EXPLAIN: 0.10,
+};
+
+const SOCIAL_WEIGHTS = {
+  VECTOR_SIM: 0.60,
+  TRAIT_EXPLAIN: 0.40,
+};
+
+const EXTREME_SOCIAL_WEIGHTS = {
+  VECTOR_SIM: 0.80,
+  TRAIT_EXPLAIN: 0.20,
+};
+
+const EVENT_WEIGHTS = {
+  VECTOR_SIM: 0.50,
+  TRAIT_EXPLAIN: 0.25,
+  GEO_BONUS: 0.25,
+};
+
+const EXTREME_EVENT_WEIGHTS = {
+  VECTOR_SIM: 0.65,
+  TRAIT_EXPLAIN: 0.10,
+  GEO_BONUS: 0.25,
+};
+
+function getWeights(isExtreme: boolean) {
+  return isExtreme ? EXTREME_WEIGHTS : WEIGHTS;
+}
+function getSocialWeights(isExtreme: boolean) {
+  return isExtreme ? EXTREME_SOCIAL_WEIGHTS : SOCIAL_WEIGHTS;
+}
+function getEventWeights(isExtreme: boolean) {
+  return isExtreme ? EXTREME_EVENT_WEIGHTS : EVENT_WEIGHTS;
+}
+
+function determineFallbackReason(
+  profileEmbedding: number[] | null | undefined,
+  itemEmbedding: number[] | null | undefined
+): FallbackReason {
+  const hasProfile = isValidEmbedding(profileEmbedding);
+  const hasItem = isValidEmbedding(itemEmbedding);
+  if (!hasProfile && !hasItem) return "missing_both_embeddings";
+  if (!hasProfile) return "missing_user_embedding";
+  if (!hasItem) return "missing_item_embedding";
+  return null;
+}
+
+export interface HybridRecommendation {
+  item: Item;
+  hybridScore: number;
+  vectorScore: number;
+  cfScore: number;
+  traitScore: number;
+  explanation: string;
+  traitExplanation: string;
+  scoringMethod: ScoringMethod;
+  fallbackReason: FallbackReason;
+}
+
+export interface CommunityPick {
+  itemId: string;
+  item: Item | null;
+  score: number;
+  becauseLovedByCount: number;
+  avgNeighborSimilarity: number;
+  topNeighborExamples: string[];
+}
+
+export interface HybridSocialMatch {
+  userId: string;
+  hybridScore: number;
+  vectorScore: number;
+  traitScore: number;
+  color: "green" | "yellow" | "grey";
+  explanations: string[];
+  scoringMethod: ScoringMethod;
+  fallbackReason: FallbackReason;
+}
+
+export interface HybridEventScore {
+  event: Event;
+  hybridScore: number;
+  vectorScore: number;
+  traitScore: number;
+  predictedEnjoyment: number;
+  distanceBucket: string | null;
+  explanation: string;
+  scoringMethod: ScoringMethod;
+  fallbackReason: FallbackReason;
+}
+
+export interface HybridHobbyScore {
+  hobby: Hobby;
+  hybridScore: number;
+  vectorScore: number;
+  traitScore: number;
+  whyItFits: string;
+  scoringMethod: ScoringMethod;
+  fallbackReason: FallbackReason;
+}
+
+function normalizeScore(score: number, min: number = 0, max: number = 100): number {
+  return Math.max(15, Math.min(100, Math.round(((score - min) / (max - min)) * 100)));
+}
+
+export async function hybridRecommend(
+  profile: TasteProfile,
+  availableItems: Item[],
+  userId: string,
+  domain: string
+): Promise<{ recommendations: HybridRecommendation[]; communityPicks: CommunityPick[] }> {
+  const isExtreme = profile.isExtremeDemo === true;
+  const w = getWeights(isExtreme);
+  const hasProfileEmbedding = isValidEmbedding(profile.embedding);
+  const itemsWithEmbeddings = availableItems.filter(i => isValidEmbedding(i.embedding));
+  const useVectors = hasProfileEmbedding && itemsWithEmbeddings.length > 0;
+
+  let vectorScores: Map<string, number> = new Map();
+  let communityPicks: CommunityPick[] = [];
+
+  if (useVectors) {
+    for (const item of itemsWithEmbeddings) {
+      const sim = computeCosineSimilarity(profile.embedding!, item.embedding!);
+      vectorScores.set(item.id, cosineSimilarityToScore(sim));
+    }
+  }
+
+  let cfScores: Map<string, number> = new Map();
+  let hasCfData = false;
+
+  if (hasProfileEmbedding) {
+    try {
+      const cfResult = await getEmbeddingNeighborCF(userId, domain, profile.embedding!, 20);
+      if (cfResult.candidates.length > 0) {
+        hasCfData = true;
+        const maxCf = Math.max(...cfResult.candidates.map(c => c.score));
+        for (const candidate of cfResult.candidates) {
+          cfScores.set(candidate.itemId, normalizeScore(candidate.score, 0, maxCf));
+        }
+
+        const itemMap = new Map(availableItems.map(i => [i.id, i]));
+        communityPicks = cfResult.candidates.slice(0, 10).map(c => ({
+          itemId: c.itemId,
+          item: itemMap.get(c.itemId) || null,
+          score: cfScores.get(c.itemId) || 0,
+          becauseLovedByCount: c.lovedByCount,
+          avgNeighborSimilarity: c.avgNeighborSimilarity,
+          topNeighborExamples: c.topNeighborNames,
+        }));
+      }
+    } catch {}
+  }
+
+  const NEUTRAL_CF = 50;
+
+  const recommendations: HybridRecommendation[] = availableItems.map(item => {
+    const itemTraits: Record<string, number> = {};
+    for (const axis of TRAIT_AXES) {
+      const key = `trait${axis.charAt(0).toUpperCase() + axis.slice(1)}` as keyof typeof item;
+      itemTraits[axis] = (item[key] as number) ?? 0.5;
+    }
+    const traitResult = traitItemMatchScore(profile, itemTraits);
+    const traitScore = traitResult.score;
+
+    const fallbackReason = determineFallbackReason(profile.embedding, item.embedding);
+
+    if (useVectors && vectorScores.has(item.id)) {
+      const vs = vectorScores.get(item.id)!;
+      const cf = cfScores.get(item.id) ?? NEUTRAL_CF;
+
+      let hybridScore: number;
+      let scoringMethod: ScoringMethod;
+
+      if (hasCfData) {
+        hybridScore = Math.round(
+          vs * w.VECTOR_SIM +
+          cf * w.COLLAB_FILTER +
+          traitScore * w.TRAIT_EXPLAIN
+        );
+        scoringMethod = "hybrid";
+      } else {
+        const adjustedVectorWeight = w.VECTOR_SIM + w.COLLAB_FILTER * 0.6;
+        const adjustedTraitWeight = w.TRAIT_EXPLAIN + w.COLLAB_FILTER * 0.4;
+        hybridScore = Math.round(
+          vs * adjustedVectorWeight +
+          traitScore * adjustedTraitWeight
+        );
+        scoringMethod = "embedding";
+      }
+
+      const explanationParts: string[] = [];
+      if (vs >= 75) explanationParts.push("Strong match to your campus interests");
+      else if (vs >= 50) explanationParts.push("Good alignment with your club preferences");
+      if (cfScores.has(item.id)) explanationParts.push("Popular with students who share your interests");
+      explanationParts.push(traitResult.explanation);
+
+      return {
+        item,
+        hybridScore: Math.max(15, Math.min(100, hybridScore)),
+        vectorScore: vs,
+        cfScore: cf,
+        traitScore,
+        explanation: explanationParts[0],
+        traitExplanation: traitResult.explanation,
+        scoringMethod,
+        fallbackReason: null,
+      };
+    }
+
+    return {
+      item,
+      hybridScore: traitScore,
+      vectorScore: 0,
+      cfScore: 0,
+      traitScore,
+      explanation: traitResult.explanation,
+      traitExplanation: traitResult.explanation,
+      scoringMethod: "trait_fallback" as ScoringMethod,
+      fallbackReason,
+    };
+  });
+
+  recommendations.sort((a, b) => b.hybridScore - a.hybridScore);
+  return { recommendations, communityPicks };
+}
+
+export function hybridSocialMatch(
+  myProfile: TasteProfile,
+  otherProfile: TasteProfile
+): HybridSocialMatch {
+  const isExtreme = myProfile.isExtremeDemo === true;
+  const sw = getSocialWeights(isExtreme);
+  const traitResult = traitMatchScore(myProfile, otherProfile);
+  const hasEmbeddings = isValidEmbedding(myProfile.embedding) && isValidEmbedding(otherProfile.embedding);
+  const fallbackReason = determineFallbackReason(myProfile.embedding, otherProfile.embedding);
+
+  if (hasEmbeddings) {
+    const sim = computeCosineSimilarity(myProfile.embedding!, otherProfile.embedding!);
+    const vectorScore = cosineSimilarityToScore(sim);
+
+    const hybridScore = Math.round(
+      vectorScore * sw.VECTOR_SIM +
+      traitResult.score * sw.TRAIT_EXPLAIN
+    );
+
+    const finalScore = Math.max(15, Math.min(100, hybridScore));
+
+    const explanations = [...traitResult.explanations];
+    if (vectorScore >= 75) {
+      explanations.unshift("Strong interest alignment detected by AI analysis");
+    } else if (vectorScore >= 50) {
+      explanations.unshift("Meaningful overlap in campus interests");
+    }
+
+    return {
+      userId: otherProfile.userId,
+      hybridScore: finalScore,
+      vectorScore,
+      traitScore: traitResult.score,
+      color: getMatchColor(finalScore),
+      explanations,
+      scoringMethod: "embedding",
+      fallbackReason: null,
+    };
+  }
+
+  return {
+    userId: otherProfile.userId,
+    hybridScore: traitResult.score,
+    vectorScore: 0,
+    traitScore: traitResult.score,
+    color: traitResult.color,
+    explanations: traitResult.explanations,
+    scoringMethod: "trait_fallback",
+    fallbackReason,
+  };
+}
+
+export function hybridEventScore(
+  profile: TasteProfile,
+  event: Event,
+  userLat?: number | null,
+  userLng?: number | null
+): HybridEventScore {
+  const isExtreme = profile.isExtremeDemo === true;
+  const ew = getEventWeights(isExtreme);
+  const eventTraits: Record<string, number> = {};
+  for (const axis of TRAIT_AXES) {
+    const key = `trait${axis.charAt(0).toUpperCase() + axis.slice(1)}` as keyof typeof event;
+    eventTraits[axis] = (event[key] as number) ?? 0.5;
+  }
+  const traitResult = traitItemMatchScore(profile, eventTraits);
+  const fallbackReason = determineFallbackReason(profile.embedding, event.embedding);
+
+  const hasEmbeddings = isValidEmbedding(profile.embedding) && isValidEmbedding(event.embedding);
+  let distanceBucket: string | null = null;
+  let geoBonus = 50;
+
+  if (userLat && userLng && event.locationLat && event.locationLng) {
+    const dist = haversineDistance(userLat, userLng, event.locationLat, event.locationLng);
+    distanceBucket = getDistanceBucket(dist);
+    if (dist < 5) geoBonus = 100;
+    else if (dist < 15) geoBonus = 85;
+    else if (dist < 30) geoBonus = 70;
+    else if (dist < 50) geoBonus = 55;
+    else if (dist < 100) geoBonus = 40;
+    else geoBonus = 20;
+  }
+
+  if (hasEmbeddings) {
+    const sim = computeCosineSimilarity(profile.embedding!, event.embedding!);
+    const vectorScore = cosineSimilarityToScore(sim);
+
+    const hybridScore = Math.round(
+      vectorScore * ew.VECTOR_SIM +
+      traitResult.score * ew.TRAIT_EXPLAIN +
+      geoBonus * ew.GEO_BONUS
+    );
+    const finalScore = Math.max(15, Math.min(100, hybridScore));
+
+    const predictedEnjoyment = Math.round(
+      vectorScore * 0.6 + traitResult.score * 0.4
+    );
+
+    const explanationParts: string[] = [];
+    if (vectorScore >= 75) explanationParts.push("AI predicts high interest based on your campus profile");
+    else if (vectorScore >= 50) explanationParts.push("Good match with your club interests");
+    else explanationParts.push(traitResult.explanation);
+    if (distanceBucket && geoBonus >= 70) explanationParts.push(`Conveniently located ${distanceBucket} away on campus`);
+
+    return {
+      event,
+      hybridScore: finalScore,
+      vectorScore,
+      traitScore: traitResult.score,
+      predictedEnjoyment: Math.max(15, Math.min(100, predictedEnjoyment)),
+      distanceBucket,
+      explanation: explanationParts.join(". "),
+      scoringMethod: "embedding",
+      fallbackReason: null,
+    };
+  }
+
+  return {
+    event,
+    hybridScore: traitResult.score,
+    vectorScore: 0,
+    traitScore: traitResult.score,
+    predictedEnjoyment: traitResult.score,
+    distanceBucket,
+    explanation: traitResult.explanation,
+    scoringMethod: "trait_fallback",
+    fallbackReason,
+  };
+}
+
+export function hybridHobbyScore(
+  profile: TasteProfile,
+  hobby: Hobby
+): HybridHobbyScore {
+  const hobbyTraits: Record<string, number> = {};
+  for (const axis of TRAIT_AXES) {
+    const key = `trait${axis.charAt(0).toUpperCase() + axis.slice(1)}` as keyof typeof hobby;
+    hobbyTraits[axis] = (hobby[key] as number) ?? 0.5;
+  }
+  const traitResult = traitHobbyMatch(profile, hobbyTraits);
+  const fallbackReason = determineFallbackReason(profile.embedding, hobby.embedding);
+
+  const hasEmbeddings = isValidEmbedding(profile.embedding) && isValidEmbedding(hobby.embedding);
+
+  if (hasEmbeddings) {
+    const sim = computeCosineSimilarity(profile.embedding!, hobby.embedding!);
+    const vectorScore = cosineSimilarityToScore(sim);
+
+    const hybridScore = Math.round(
+      vectorScore * 0.55 +
+      traitResult.score * 0.45
+    );
+    const finalScore = Math.max(15, Math.min(100, hybridScore));
+
+    let whyItFits = traitResult.whyItFits;
+    if (vectorScore >= 75) {
+      whyItFits = `AI analysis shows strong alignment. ${whyItFits}`;
+    }
+
+    return {
+      hobby,
+      hybridScore: finalScore,
+      vectorScore,
+      traitScore: traitResult.score,
+      whyItFits,
+      scoringMethod: "embedding",
+      fallbackReason: null,
+    };
+  }
+
+  return {
+    hobby,
+    hybridScore: traitResult.score,
+    vectorScore: 0,
+    traitScore: traitResult.score,
+    whyItFits: traitResult.whyItFits,
+    scoringMethod: "trait_fallback",
+    fallbackReason,
+  };
+}

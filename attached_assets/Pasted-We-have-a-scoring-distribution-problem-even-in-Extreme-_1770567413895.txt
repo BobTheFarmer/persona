@@ -1,0 +1,113 @@
+We have a scoring distribution problem: even in Extreme Persona mode, top matches cap around ~70% so everything stays yellow. Fix this properly at the ML/scoring layer (NOT UI hardcoding) so that in Extreme mode the top clubs/events/friends naturally reach green (>=75) while low matches can drop into grey. Also remove the “EXTREME MODE” all-caps badge from the profile page UI (keep the toggle in the logo menu, but don’t scream it on the profile).
+
+A) FIX THE ROOT CAUSE: SCORE CALIBRATION + EMBEDDING QUALITY
+
+Diagnose why scores are compressed:
+
+In hybrid-engine.ts (and any helper), cosine similarity → score mapping is likely too conservative or heavily clamped.
+
+Confirm the cosine similarity ranges we’re seeing (min/median/max) for clubs/events/friends under Extreme mode.
+
+Add a small debug endpoint (dev/demo only): GET /api/debug/score-distribution?domain=academic|... that returns:
+
+top 20 vector similarities
+
+top 20 final scores
+
+min/median/max for vectorScore and finalScore
+
+indicates scoring weights used
+This is ONLY for calibration; keep it guarded by DEMO_MODE.
+
+Improve the USER EMBEDDING in Extreme mode so it actually aligns strongly with some items:
+Right now the “derive embedding from profile text” may be too generic, producing a “blurry” embedding that doesn’t get high cosine similarity with any specific club/event text. Fix by making the Extreme-mode embedding prompt much more specific and item-aligned:
+
+Build the user embedding text as a structured “persona document” including:
+
+major + year + goals + preferred club archetypes
+
+3–5 explicit “I strongly prefer …” statements tied to your 8 traits
+
+3–5 explicit “I avoid …” statements
+
+8-trait values rendered as words (e.g., “very high novelty (0.90)”, “very low cozy (0.18)”)
+
+Add 6–10 “anchor keywords” that are present in your seeded club descriptions/tags (e.g., “hackathon”, “research”, “robotics”, “case competition”, “startup”, “cloud”, “security”, “AI”, “IEEE”, “consulting”).
+
+Important: do NOT fake match scores; only improve the embedding input text.
+
+Ensure item/event embeddings contain meaningful text:
+
+When generating embeddings for clubs/events, embed a rich text string:
+${name}. ${description}. Domain:${domain}. Tags:${tags}. Meeting:${nextMeetingAt}. Location:${location}. Signup:${signupUrl}.
+
+For events include category/deal/price/organizer.
+This increases semantic overlap with the user persona document and raises top cosine similarities naturally.
+
+B) FIX SCORE MAPPING TO PRODUCE GREEN WHEN COSINE IS HIGH
+
+Adjust cosineSimilarityToScore mapping (central place) so realistic high cosine becomes >=75:
+
+Current mapping likely compresses (e.g., multiplying down, clamping, or subtracting too much).
+
+Implement a monotonic mapping that spreads scores:
+Example approach (pick one):
+Option 1 (logistic):
+score = 100 * sigmoid((cos - 0.25) * 5.5)
+Option 2 (piecewise linear):
+if cos <= 0.10 => 15–35
+0.10–0.25 => 35–60
+0.25–0.40 => 60–80
+
+=0.40 => 80–100
+
+Keep existing floor/ceiling rules but DO NOT cap typical tops at 70.
+
+Re-run the distribution endpoint to confirm: top-1 club/event under Extreme gets >=75 in at least one domain.
+
+Re-balance hybrid weights ONLY IF needed:
+
+Keep embeddings-first. But if traitExplain is dragging down the final score, ensure the final score isn’t being averaged in a way that penalizes a strong vector match.
+
+In Extreme mode specifically (only when taste_profiles.isExtremeDemo=true), allow weights:
+vector 0.70, CF 0.20, traits 0.10
+Rationale: Extreme mode is a judge demo for “ML reacts strongly.” This is still real scoring, not UI hacks.
+
+Confirm green/yellow thresholds:
+
+Leave green threshold at 75.
+
+Ensure scoring isn’t rounding down unnecessarily (use Math.round at the end only once).
+
+C) MAKE SURE GREENS ACTUALLY EXIST IN SEEDED DATA
+If even after calibration we still don’t hit >=75, it means the seed clubs/events are too “even” or not aligned.
+
+Update seed.ts to ensure at least 6–10 clubs and 6–10 events are strong matches to the Extreme Garv archetype by text content and tags (NOT by hardcoded scores).
+
+Example: add more “AI/ML, hackathon, research, startup, security, systems, product” language to a subset of academic/professional clubs and a few events.
+
+This is allowed because the whole purpose is a compelling demo dataset.
+
+D) REMOVE THE PROFILE “EXTREME MODE” BADGE
+
+In profile.tsx remove the all-caps “EXTREME MODE” indicator entirely.
+
+Keep the toggle only in the logo dropdown. If you want a subtle indicator, it must be non-shouty (e.g., a tiny dot), but default is remove completely.
+
+E) VALIDATION CHECKLIST (must do)
+
+POST /api/demo/reset
+
+Toggle Extreme ON
+
+Call /api/debug/score-distribution for 2–3 domains and /events
+
+confirm top score >=75 in at least one domain and events
+
+Open Clubs tab: confirm at least a few greens and some greys
+
+Open Events tab: confirm at least one green and urgency/social still works
+
+Open Find Friends: confirm at least one green match and explanation tooltips still accurate
+
+Do all changes without breaking existing UI layouts. Only modify scoring, embeddings text, seed content, and remove the profile badge.
