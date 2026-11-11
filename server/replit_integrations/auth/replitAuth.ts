@@ -1,160 +1,124 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
-
-import passport from "passport";
 import session from "express-session";
-import type { Express, RequestHandler } from "express";
-import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { authStorage } from "./storage";
+import type { Express, RequestHandler } from "express";
+import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { db, pool } from "../../db";
+import { users, authCredentials } from "@shared/models/auth";
+import { hashPassword, verifyPassword } from "./password";
 
-const getOidcConfig = memoize(
-  async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
-  },
-  { maxAge: 3600 * 1000 }
-);
+declare global {
+  namespace Express {
+    interface User { claims: { sub: string }; }
+    interface Request { user?: User; }
+  }
+}
+
+declare module "express-session" {
+  interface SessionData { userId?: string; }
+}
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+    throw new Error("SESSION_SECRET must contain at least 32 random characters");
+  }
+  const PgStore = connectPg(session);
   return session({
-    secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+    name: "persona.sid",
+    secret: process.env.SESSION_SECRET,
+    store: new PgStore({ pool, createTableIfMissing: true, ttl: 7 * 24 * 60 * 60, tableName: "sessions" }),
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: true,
-      maxAge: sessionTtl,
-    },
+    cookie: { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 7 * 24 * 60 * 60 * 1000 },
   });
 }
 
-function updateUserSession(
-  user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
+const attempts = new Map<string, { count: number; until: number }>();
+const limitAuth: RequestHandler = (req, res, next) => {
+  const now = Date.now();
+  attempts.forEach((entry, key) => { if (entry.until <= now) attempts.delete(key); });
+  const key = req.ip ?? "unknown";
+  const entry = attempts.get(key) ?? { count: 0, until: now + 15 * 60 * 1000 };
+  if (entry.count >= 15 || (!attempts.has(key) && attempts.size >= 10000)) {
+    res.setHeader("Retry-After", "900");
+    return res.status(429).send("Too many attempts. Please try again in 15 minutes.");
+  }
+  entry.count++;
+  attempts.set(key, entry);
+  next();
+};
 
-async function upsertUser(claims: any) {
-  await authStorage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+const credentials = z.object({
+  email: z.string().trim().email().max(254).transform(value => value.toLowerCase()),
+  password: z.string().min(12).max(128),
+  firstName: z.string().trim().max(60).optional(),
+});
+
+function loginPage(error = "") {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · Persona</title><style>body{background:#101828;color:#f8fafc;font:16px system-ui;margin:0;display:grid;min-height:100vh;place-items:center}main{width:min(360px,85vw);padding:32px;background:#1e293b;border-radius:20px}h1{margin-top:0}label{display:block;margin:16px 0 6px}input,button{box-sizing:border-box;width:100%;padding:12px;border-radius:8px;border:1px solid #64748b;font:inherit}button{margin-top:16px;cursor:pointer;background:#c4b5fd;color:#111827;font-weight:600}a{color:#c4b5fd}small{display:block;margin-top:14px;color:#cbd5e1}.error{color:#fda4af}</style></head><body><main><a href="/">← Persona</a><h1>Find your people.</h1><p>Sign in or create your campus discovery profile.</p>${error ? `<p class="error" role="alert">${error}</p>` : ""}<form method="post" action="/api/auth/login"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required><label for="firstName">First name (new accounts only)</label><input id="firstName" name="firstName" autocomplete="given-name" maxlength="60"><button type="submit">Sign in</button><button type="submit" formaction="/api/auth/register">Create account</button><small>Use at least 12 characters. This is an independent Persona account, not your university login. Email verification and self-service password recovery are not yet available.</small></form></main></body></html>`;
 }
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  const config = await getOidcConfig();
-
-  const verify: VerifyFunction = async (
-    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
-  ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
-  };
-
-  // Keep track of registered strategies
-  const registeredStrategies = new Set<string>();
-
-  // Helper function to ensure strategy exists for a domain
-  const ensureStrategy = (domain: string) => {
-    const strategyName = `replitauth:${domain}`;
-    if (!registeredStrategies.has(strategyName)) {
-      const strategy = new Strategy(
-        {
-          name: strategyName,
-          config,
-          scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
-        },
-        verify
-      );
-      passport.use(strategy);
-      registeredStrategies.add(strategyName);
+  // Reject cross-origin writes, including login CSRF. Non-browser clients may omit Origin.
+  app.use((req, res, next) => {
+    if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+      const origin = req.headers.origin;
+      if ((origin && origin !== `${req.protocol}://${req.get("host")}`) || req.headers["sec-fetch-site"] === "cross-site") {
+        return res.status(403).json({ message: "Cross-origin requests are not allowed" });
+      }
     }
-  };
-
-  passport.serializeUser((user: Express.User, cb) => cb(null, user));
-  passport.deserializeUser((user: Express.User, cb) => cb(null, user));
-
-  app.get("/api/login", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
+    next();
   });
-
-  app.get("/api/callback", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
-  });
-
-  app.get("/api/logout", (req, res) => {
-    req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+  app.get("/api/login", (_req, res) => res.set("Cache-Control", "no-store").type("html").send(loginPage()));
+  for (const mode of ["login", "register"] as const) {
+    app.post(`/api/auth/${mode}`, limitAuth, async (req, res, next) => {
+      try {
+        const parsed = credentials.safeParse(req.body);
+        if (!parsed.success) return res.status(400).type("html").send(loginPage("Enter a valid email and a password of 12–128 characters."));
+        const { email, password, firstName } = parsed.data;
+        let userId: string;
+        if (mode === "register") {
+          userId = randomUUID();
+          const passwordHash = await hashPassword(password);
+          try {
+            await db.transaction(async tx => {
+              await tx.insert(users).values({ id: userId, email, firstName: firstName || "Student" });
+              await tx.insert(authCredentials).values({ userId, passwordHash });
+            });
+          } catch (error: any) {
+            if (error.code === "23505" || error.cause?.code === "23505") return res.status(400).type("html").send(loginPage("Unable to create that account. Try signing in or use another email."));
+            throw error;
+          }
+        } else {
+          const [account] = await db.select({ id: users.id, hash: authCredentials.passwordHash }).from(users).innerJoin(authCredentials, eq(users.id, authCredentials.userId)).where(eq(users.email, email)).limit(1);
+          // Always perform a password derivation, even when the account is absent.
+          const dummy = `scrypt:${"0".repeat(32)}:${"0".repeat(128)}`;
+          const valid = await verifyPassword(password, account?.hash ?? dummy);
+          if (!account || !valid) return res.status(401).type("html").send(loginPage("Email or password is incorrect."));
+          userId = account.id;
+        }
+        req.session.regenerate(error => {
+          if (error) return next(error);
+          req.session.userId = userId;
+          req.session.save(error => error ? next(error) : res.redirect(303, "/"));
+        });
+      } catch (error) { next(error); }
+    });
+  }
+  app.get("/api/logout", (req, res, next) => {
+    req.session.destroy(error => {
+      if (error) return next(error);
+      res.clearCookie("persona.sid");
+      res.redirect("/");
     });
   });
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+export const isAuthenticated: RequestHandler = (req, res, next) => {
+  if (!req.session?.userId) return res.status(401).json({ message: "Unauthorized" });
+  req.user = { claims: { sub: req.session.userId } } as Express.User;
+  next();
 };

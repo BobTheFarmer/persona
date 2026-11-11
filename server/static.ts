@@ -13,9 +13,13 @@ export function serveStatic(app: Express) {
   app.use(
     express.static(distPath, {
       maxAge: "1d",
-      immutable: true,
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-cache");
+      },
     })
   );
+
+  app.use("/api", (_req, res) => { res.status(404).json({ message: "Not found" }); });
 
   app.use("/{*path}", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));

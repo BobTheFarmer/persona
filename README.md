@@ -1,3 +1,7 @@
+# Persona
+
+Campus club discovery prototype. See [DEPLOYMENT.md](DEPLOYMENT.md) for the current Railway build, local authentication, and limitations. The historical architecture below describes the original hackathon prototype; Replit login, synthetic student profiles, and demo/admin controls are no longer enabled.
+
 # Persona FULL README
 
 ## Overview

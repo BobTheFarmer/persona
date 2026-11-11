@@ -37,12 +37,13 @@ export default function LandingPage() {
       </nav>
 
       <section className="pt-28 pb-20 px-4 sm:px-6">
+        <p className="max-w-6xl mx-auto mb-6 text-sm text-muted-foreground">Historical sample catalog, not an official TAMU directory. Verify club details before making plans.</p>
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
                 <Brain className="h-3.5 w-3.5 text-primary" />
-                <span>AI-Powered Taste Intelligence</span>
+                <span>Campus discovery prototype</span>
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
                 Discover Your

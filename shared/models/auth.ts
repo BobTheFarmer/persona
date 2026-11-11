@@ -35,3 +35,9 @@ export const users = pgTable("users", {
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Kept separate from user profiles so hashes cannot leak through profile APIs.
+export const authCredentials = pgTable("auth_credentials", {
+  userId: varchar("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  passwordHash: varchar("password_hash").notNull(),
+});

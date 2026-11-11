@@ -11,15 +11,7 @@ import { recomputeTasteEmbedding, deriveEmbeddingFromProfile, checkEmbeddingHeal
 import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
 
-function demoAuth(req: any, res: any, next: any) {
-  if (process.env.DEMO_BYPASS_AUTH === "true") {
-    if (!req.user) {
-      req.user = { claims: { sub: "49486139" } };
-    }
-    return next();
-  }
-  return isAuthenticated(req, res, next);
-}
+const demoAuth = isAuthenticated;
 
 function computeClubUrgency(club: any): { urgencyScore: number; urgencyLabel: string; deadline: string | null } {
   const now = new Date();
@@ -115,6 +107,10 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   await setupAuth(app);
+  // Legacy hackathon tools can mutate other accounts: never expose them.
+  app.use(["/api/demo", "/api/debug", "/api/admin"], (_req, res) => {
+    res.status(404).json({ message: "Not found" });
+  });
   registerAuthRoutes(app);
 
   app.post("/api/demo/bootstrap", demoAuth, async (req: any, res) => {

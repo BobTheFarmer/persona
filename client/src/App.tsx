@@ -28,7 +28,7 @@ import SocialPage from "@/pages/social";
 import EventsPage from "@/pages/events";
 import ExplorePage from "@/pages/explore";
 import AboutPage from "@/pages/about";
-import ParityCheckPage from "@/pages/parity-check";
+
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,7 +41,7 @@ function Router() {
       <Route path="/events" component={EventsPage} />
       <Route path="/social" component={SocialPage} />
       <Route path="/about" component={AboutPage} />
-      <Route path="/parity-check" component={ParityCheckPage} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -61,36 +61,6 @@ function AuthenticatedApp() {
     mutationFn: () => apiRequest("POST", "/api/onboarding/reset"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/taste-profile"] });
-    },
-  });
-
-  const toggleExtreme = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/demo/toggle-extreme"),
-    onSuccess: async (res) => {
-      const data = await res.json();
-      queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey[0];
-          return typeof key === "string" && (
-            key.startsWith("/api/taste-profile") ||
-            key.startsWith("/api/recommendations") ||
-            key.startsWith("/api/events") ||
-            key.startsWith("/api/social") ||
-            key.startsWith("/api/friends") ||
-            key.startsWith("/api/explore") ||
-            key.startsWith("/api/profile")
-          );
-        },
-      });
-      toast({
-        title: data.isExtremeDemo ? "Extreme Persona ON" : "Extreme Persona OFF",
-        description: data.isExtremeDemo
-          ? "Profile set to Innovator Adventurer archetype"
-          : "Restored to normal profile",
-      });
-    },
-    onError: (err) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
@@ -122,6 +92,7 @@ function AuthenticatedApp() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isProfilePage ? "" : "bg-background"}`}>
+      <div className="bg-amber-50 text-amber-950 px-4 py-2 text-xs text-center border-b border-amber-200">Prototype · Historical sample club catalog. Verify details with each organization.</div>
       <header className={`flex items-center justify-between gap-4 px-4 py-2 border-b border-border/50 h-14 shrink-0 sticky top-0 z-40 ${isProfilePage ? "bg-black/30 backdrop-blur-xl border-white/10" : "bg-background/80 backdrop-blur-xl"}`}>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer outline-none" data-testid="button-persona-menu">
@@ -146,14 +117,6 @@ function AuthenticatedApp() {
               <RotateCcw className="h-4 w-4 mr-2" />
               Retake Quiz
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => toggleExtreme.mutate()}
-              disabled={toggleExtreme.isPending}
-              data-testid="menu-item-toggle-extreme"
-            >
-              <Zap className={cn("h-4 w-4 mr-2", profile?.isExtremeDemo && "text-amber-400")} />
-              {profile?.isExtremeDemo ? "Disable Extreme Mode" : "Extreme Persona (Demo)"}
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => logout()}
@@ -177,10 +140,6 @@ function AuthenticatedApp() {
 function AppContent() {
   const { user, isLoading } = useAuth();
   const [location] = useLocation();
-
-  if (location === "/parity-check") {
-    return <ParityCheckPage />;
-  }
 
   if (isLoading) {
     return (

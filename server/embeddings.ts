@@ -18,6 +18,7 @@ async function getExtractor() {
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
+  if (process.env.ENABLE_EMBEDDINGS !== "true") throw new Error("Embeddings disabled; using trait matching");
   const extractor = await getExtractor();
   const result = await extractor(text.slice(0, 8000), { pooling: "mean", normalize: true });
   return Array.from(result.data as Float32Array);
@@ -294,6 +295,7 @@ export function getDistanceBucket(distanceKm: number): string {
 }
 
 export async function recomputeTasteEmbedding(userId: string): Promise<{ updated: boolean; interactionCount: number; method: string }> {
+  if (process.env.ENABLE_EMBEDDINGS !== "true") return { updated: false, interactionCount: 0, method: "trait_fallback" };
   const profileResult = await pool.query(
     "SELECT id FROM taste_profiles WHERE user_id = $1",
     [userId]
@@ -340,6 +342,7 @@ export async function recomputeTasteEmbedding(userId: string): Promise<{ updated
 }
 
 export async function deriveEmbeddingFromProfile(userId: string): Promise<{ updated: boolean; method: string }> {
+  if (process.env.ENABLE_EMBEDDINGS !== "true") return { updated: false, method: "trait_fallback" };
   const profileResult = await pool.query(
     `SELECT id, trait_novelty, trait_intensity, trait_cozy, trait_strategy,
             trait_social, trait_creativity, trait_nostalgia, trait_adventure,
