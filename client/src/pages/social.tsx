@@ -514,11 +514,11 @@ function SuggestionCard({
           <Button
             className="flex-1 bg-primary text-primary-foreground border-primary"
             onClick={onAddFriend}
-            disabled={isAdding}
+            disabled={true}
             data-testid={`button-add-friend-${suggestion.id}`}
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Friend
+            Friend requests coming soon
           </Button>
         </div>
 

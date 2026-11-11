@@ -705,17 +705,8 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/friends/:friendId", demoAuth, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { friendId } = req.params;
-      if (userId === friendId) return res.status(400).json({ message: "Cannot friend yourself" });
-      const friendship = await storage.addFriend(userId, friendId);
-      res.json(friendship);
-    } catch (error) {
-      console.error("Error adding friend:", error);
-      res.status(500).json({ message: "Failed to add friend" });
-    }
+  app.post("/api/friends/:friendId", demoAuth, (_req, res) => {
+    res.status(409).json({ message: "Friend requests are not available yet. Mutual consent is required before this feature opens." });
   });
 
   app.delete("/api/friends/:friendId", demoAuth, async (req: any, res) => {

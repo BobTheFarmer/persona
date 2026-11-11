@@ -781,14 +781,14 @@ async function seedEmbeddings() {
 // Seed catalog only. Never invent student accounts, RSVP activity, or current events.
 // Only initialize empty tables; restarting must not erase user data.
 export async function seedDatabase() {
-  const [itemCount] = await db.select({ count: sql<number>`count(*)` }).from(items);
-  if (Number(itemCount.count) === 0) {
-    for (const item of SEED_ITEMS) await storage.createItem(item);
-  }
-  const [hobbyCount] = await db.select({ count: sql<number>`count(*)` }).from(hobbies);
-  if (Number(hobbyCount.count) === 0) {
-    for (const hobby of SEED_HOBBIES) await storage.createHobby(hobby);
-  }
+  await db.transaction(async tx => {
+    // Serialize initialization across overlapping deployments; commit all-or-nothing.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(72510931)`);
+    const [itemCount] = await tx.select({ count: sql<number>`count(*)` }).from(items);
+    if (Number(itemCount.count) === 0) await tx.insert(items).values(SEED_ITEMS);
+    const [hobbyCount] = await tx.select({ count: sql<number>`count(*)` }).from(hobbies);
+    if (Number(hobbyCount.count) === 0) await tx.insert(hobbies).values(SEED_HOBBIES);
+  });
   if (process.env.ENABLE_EMBEDDINGS === "true") {
     // Background optimization, not a prerequisite for listening or health checks.
     void seedEmbeddings().catch(() => console.warn("Embeddings unavailable; trait matching remains active."));
