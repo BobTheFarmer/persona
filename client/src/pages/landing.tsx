@@ -1,138 +1,59 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RadarChart } from "@/components/radar-chart";
-import { MatchPill } from "@/components/match-pill";
-import { Sparkles, Users, Compass, Zap, ArrowRight, Brain } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const sampleTraits = {
-  novelty: 0.82,
-  intensity: 0.65,
-  cozy: 0.35,
-  strategy: 0.78,
-  social: 0.55,
-  creativity: 0.88,
-  nostalgia: 0.42,
-  adventure: 0.91,
+  novelty: 0.82, intensity: 0.65, cozy: 0.35, strategy: 0.78,
+  social: 0.55, creativity: 0.88, nostalgia: 0.42, adventure: 0.91,
 };
+const steps = [
+  { title: "Start with your interests", detail: "Answer six questions about the activities and settings you prefer. There are no right answers." },
+  { title: "Compare campus clubs", detail: "Browse recommendations and their match explanations. Save clubs you want to look into; skip those you don’t." },
+  { title: "Take a closer look", detail: "Use each organization’s details as a starting point. Confirm current meetings and membership information directly with the club." },
+];
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-lg tracking-tight" data-testid="text-app-name">Persona</span>
-          </div>
-          <div className="flex items-center gap-2">
+      <header className="border-b border-border">
+        <nav aria-label="Main navigation" className="max-w-6xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between gap-4">
+          <a href="/" className="font-semibold text-2xl tracking-tight" data-testid="text-app-name">Persona<span className="text-primary">.</span></a>
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <a href="/api/login">
-              <Button data-testid="button-login-nav">Sign In</Button>
-            </a>
+            <Button asChild variant="outline" data-testid="button-login-nav"><a href="/api/login">Sign in</a></Button>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
-      <section className="pt-28 pb-20 px-4 sm:px-6">
-        <p className="max-w-6xl mx-auto mb-6 text-sm text-muted-foreground">Historical sample catalog, not an official TAMU directory. Verify club details before making plans.</p>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
-                <Brain className="h-3.5 w-3.5 text-primary" />
-                <span>Campus discovery prototype</span>
-              </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
-                Discover Your
-                <span className="block text-primary mt-1">Persona DNA</span>
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Discover campus clubs that fit how you learn, connect, compete, and give back. Your eight-trait profile helps explain why each recommendation might suit you.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a href="/api/login">
-                  <Button size="lg" data-testid="button-get-started">
-                    Get Started
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </a>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
-                <div className="flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-primary" />
-                  <span>Instant matching</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Brain className="h-3.5 w-3.5 text-primary" />
-                  <span>8-trait taste engine</span>
-                </div>
-              </div>
-            </div>
+      <main>
+        <section className="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-20 grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary mb-5">Campus life · Texas A&amp;M</p>
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl leading-[1.08] tracking-tight max-w-xl">Find a club you’ll want to show up for.</h1>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg mt-6">A quieter way to explore campus. Tell Persona what you enjoy, then find student organizations with reasons to give them a try.</p>
+            <Button asChild size="lg" className="mt-8" data-testid="button-get-started"><a href="/api/login">Build your profile <ArrowRight className="ml-3 h-4 w-4" /></a></Button>
+            <p className="text-sm text-muted-foreground mt-3">Six questions to get started.</p>
+          </div>
+          <figure className="border-y border-border py-6">
+            <div className="flex justify-between items-baseline gap-4"><h2 className="font-semibold">An interest profile</h2><span className="text-xs text-muted-foreground">Illustrative example</span></div>
+            <RadarChart traits={sampleTraits} size={380} className="flex justify-center my-3" />
+            <figcaption className="text-sm leading-relaxed text-muted-foreground border-t border-border pt-4">Eight preferences help explain a recommendation. A match score is a starting point, not a promise you’ll like a club.</figcaption>
+          </figure>
+        </section>
 
-            <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 rounded-2xl" />
-              <div className="relative">
-                <RadarChart traits={sampleTraits} size={300} />
-                <div className="absolute -top-2 -right-2">
-                  <MatchPill score={92} size="lg" />
-                </div>
-              </div>
-            </div>
+        <section className="border-t border-border" aria-labelledby="how-it-works">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-16 grid md:grid-cols-[1fr_2fr] gap-8 md:gap-16">
+            <div><p className="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-3">Getting started</p><h2 id="how-it-works" className="font-serif text-3xl">From interests<br className="hidden md:block" /> to a shortlist.</h2></div>
+            <ol className="divide-y divide-border">
+              {steps.map((step, index) => <li key={step.title} className="flex gap-5 py-5 first:pt-0 last:pb-0"><span className="text-sm font-mono text-primary pt-1" aria-hidden="true">0{index + 1}</span><div><h3 className="font-semibold text-lg">{step.title}</h3><p className="text-sm text-muted-foreground leading-relaxed mt-2 max-w-xl">{step.detail}</p></div></li>)}
+            </ol>
           </div>
-        </div>
-      </section>
-
-      <section className="py-20 px-4 sm:px-6 border-t border-border/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">How it works</h2>
-            <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-              Three steps to understanding yourself better and finding your people.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-3 gap-6">
-            <Card className="p-6 space-y-3">
-              <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">Build Your DNA</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Answer a short preference quiz to build your eight-trait profile. Explore what motivates you, from creativity and strategy to adventure and community.
-              </p>
-            </Card>
-            <Card className="p-6 space-y-3">
-              <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">Find Your People</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                See compatibility scores with others explained by shared taste patterns, not just surface-level overlap. High match, low overlap is the magic.
-              </p>
-            </Card>
-            <Card className="p-6 space-y-3">
-              <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
-                <Compass className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">Explore New Worlds</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Explore academic, professional, social, sports, and volunteering clubs. Recommendations include a reason, so you can decide what to investigate next.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-border/50 py-8 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span>Persona</span>
-          </div>
-          <p>Built with taste intelligence</p>
-        </div>
+        </section>
+      </main>
+      <footer className="border-t border-border max-w-6xl mx-auto px-5 sm:px-8 py-7 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-12 text-sm">
+        <span className="font-semibold shrink-0">Persona · Prototype</span>
+        <p className="text-muted-foreground leading-relaxed max-w-2xl">Historical sample catalog, not an official Texas A&amp;M directory. Club details may be out of date. Verify information with the organization before making plans.</p>
       </footer>
     </div>
   );

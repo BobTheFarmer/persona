@@ -236,10 +236,10 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
 
             <div className="space-y-2">
               <h1 className="text-2xl font-bold tracking-tight" data-testid="text-quiz-title">
-                Persona DNA Quiz
+                Your interest profile
               </h1>
               <p className="text-muted-foreground text-sm">
-                6 quick questions to build your campus personality profile
+                Six questions about what you enjoy doing on campus.
               </p>
             </div>
 
@@ -275,7 +275,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
               </div>
 
               <div className="rounded-md border border-border/60 bg-card p-4">
-                <h2 className="text-sm font-semibold mb-2">Your 8 Persona Traits</h2>
+                <h2 className="text-sm font-semibold mb-2">Eight preferences</h2>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   {[
                     "Novelty Seeking", "Social Energy", "Structure & Planning", "Depth & Closeness",
@@ -427,11 +427,11 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
               data-testid="button-quiz-next"
             >
               {submitMutation.isPending ? (
-                "Building DNA..."
+                "Building your profile..."
               ) : isLastStep ? (
                 <>
                   <Check className="h-4 w-4 mr-1" />
-                  See My DNA
+                  See my profile
                 </>
               ) : (
                 <>
@@ -447,7 +447,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
       <Dialog open={showProjectDetails} onOpenChange={setShowProjectDetails}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>About Persona DNA Quiz</DialogTitle>
+            <DialogTitle>About Your interest profile</DialogTitle>
             <DialogDescription>
               This quiz uses a Best-Worst Scaling method to estimate your personality profile across 8 dimensions. Each question shows 4 statements. You pick the one that describes you MOST and the one that describes you LEAST. This reduces bias and produces more accurate results than simple agree/disagree scales.
             </DialogDescription>
