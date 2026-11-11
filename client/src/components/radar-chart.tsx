@@ -71,8 +71,8 @@ export function RadarChart({
       <svg
         width={size}
         height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="drop-shadow-lg"
+        viewBox={`-40 -20 ${size + 80} ${size + 40}`}
+        className="drop-shadow-lg max-w-full h-auto"
       >
         {gridLevels.map((level) => (
           <polygon

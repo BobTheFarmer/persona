@@ -50,7 +50,7 @@ export default function LandingPage() {
                 <span className="block text-primary mt-1">Persona DNA</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
-                Persona maps your preferences across movies, music, games, food, and hobbies into a unique profile that connects you with truly compatible people and experiences.
+                Discover campus clubs that fit how you learn, connect, compete, and give back. Your eight-trait profile helps explain why each recommendation might suit you.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <a href="/api/login">
@@ -100,7 +100,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-lg">Build Your DNA</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Pick your favorites across movies, music, games, food, and hobbies. Our engine maps your taste into a unique multi-dimensional profile.
+                Answer a short preference quiz to build your eight-trait profile. Explore what motivates you, from creativity and strategy to adventure and community.
               </p>
             </Card>
             <Card className="p-6 space-y-3">
@@ -118,7 +118,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-semibold text-lg">Explore New Worlds</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Discover hobbies and content that fit your personality. Every recommendation comes with a "why" so you understand the connection.
+                Explore academic, professional, social, sports, and volunteering clubs. Recommendations include a reason, so you can decide what to investigate next.
               </p>
             </Card>
           </div>
