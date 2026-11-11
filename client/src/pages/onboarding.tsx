@@ -447,9 +447,9 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
       <Dialog open={showProjectDetails} onOpenChange={setShowProjectDetails}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>About Your interest profile</DialogTitle>
+            <DialogTitle>About your interest profile</DialogTitle>
             <DialogDescription>
-              This quiz uses a Best-Worst Scaling method to estimate your personality profile across 8 dimensions. Each question shows 4 statements. You pick the one that describes you MOST and the one that describes you LEAST. This reduces bias and produces more accurate results than simple agree/disagree scales.
+              Each question shows four statements. Choose the one most like you and the one least like you. Your choices create an interest profile across eight preferences. This is a recommendation aid, not a validated personality assessment.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -465,7 +465,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
               </div>
             </div>
             <p className="text-xs">
-              Your results power personalized club, event, and friend recommendations using ML-based matching.
+              Your results help rank club suggestions. Read the match explanation and club details before deciding what to explore.
             </p>
           </div>
         </DialogContent>
