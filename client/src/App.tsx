@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { TasteProfile } from "@shared/schema";
-import { Sparkles, Info, RotateCcw, LogOut, Zap } from "lucide-react";
+import { ChevronDown, Info, RotateCcw, LogOut, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,14 +92,11 @@ function AuthenticatedApp() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isProfilePage ? "" : "bg-background"}`}>
-      <div className="bg-amber-50 text-amber-950 px-4 py-2 text-xs text-center border-b border-amber-200">Prototype · Historical sample club catalog. Verify details with each organization.</div>
+      <div className="bg-muted text-muted-foreground px-4 py-2 text-xs text-center border-b border-border">Club details may be outdated. Confirm with the organization.</div>
       <header className={`flex items-center justify-between gap-4 px-4 py-2 border-b border-border/50 h-14 shrink-0 sticky top-0 z-40 ${isProfilePage ? "bg-black/30 backdrop-blur-xl border-white/10" : "bg-background/80 backdrop-blur-xl"}`}>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer outline-none" data-testid="button-persona-menu">
-            <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-            </div>
-            <span className={`font-semibold text-base tracking-tight ${isProfilePage ? "text-white" : ""}`}>Persona</span>
+            <span className={`font-semibold text-base tracking-tight ${isProfilePage ? "text-white" : ""}`}>Persona</span><ChevronDown className="h-4 w-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
             <DropdownMenuItem

@@ -3,7 +3,7 @@ import { User, GraduationCap, Users, CalendarDays, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { title: "My DNA", href: "/", icon: User },
+  { title: "Profile", href: "/", icon: User },
   { title: "Clubs", href: "/recommendations", icon: GraduationCap },
   { title: "Maps", href: "/explore", icon: Map },
   { title: "Events", href: "/events", icon: CalendarDays },
@@ -30,7 +30,7 @@ export function BottomNav() {
                 data-testid={`nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}
               >
                 <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                <span className={cn("text-[10px] font-medium", isActive && "text-primary")}>{item.title}</span>
+                <span className={cn("text-xs font-medium", isActive && "text-primary")}>{item.title}</span>
               </button>
             </Link>
           );

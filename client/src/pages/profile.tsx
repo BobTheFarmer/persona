@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MatchPill } from "@/components/match-pill";
 import { TRAIT_AXES, type TasteProfile, type Item } from "@shared/schema";
 import {
-  Sparkles, TrendingUp, Grip, ChevronUp, ChevronDown,
+  Grip, ChevronUp, ChevronDown,
   Settings, Palette, Upload, X, Check,
   GraduationCap, Calendar, Shield, Users, ArrowLeft, MapPin, Clock
 } from "lucide-react";
@@ -27,14 +27,14 @@ import coverSkateboarding from "@/assets/images/cover-skateboarding.png";
 import coverDataScience from "@/assets/images/cover-data-science.jpg";
 
 const TRAIT_LABELS: Record<string, string> = {
-  novelty: "Novelty Seeker",
+  novelty: "New experiences",
   intensity: "Intensity",
-  cozy: "Cozy Factor",
-  strategy: "Strategic Mind",
-  social: "Social Energy",
-  creativity: "Creative Spirit",
-  nostalgia: "Nostalgia Pull",
-  adventure: "Adventure Drive",
+  cozy: "Comfort",
+  strategy: "Strategy",
+  social: "Social",
+  creativity: "Creativity",
+  nostalgia: "Nostalgia",
+  adventure: "Adventure",
 };
 
 function getTraitColor(val: number) {
@@ -71,25 +71,25 @@ const THEMES: ThemeConfig[] = [
     label: "Oceanic",
     image: themeOceanic,
     accent: "from-cyan-500/20 to-blue-600/20",
-    glassColor: "bg-white/[0.08] border-white/20",
+    glassColor: "bg-zinc-900 border-white/10",
   },
   {
     id: "aurora",
     label: "Aurora",
     image: themeAurora,
     accent: "from-green-500/20 to-purple-600/20",
-    glassColor: "bg-white/[0.08] border-white/20",
+    glassColor: "bg-zinc-900 border-white/10",
   },
   {
     id: "ember",
     label: "Ember",
     image: themeEmber,
     accent: "from-orange-500/20 to-red-600/20",
-    glassColor: "bg-white/[0.08] border-white/20",
+    glassColor: "bg-zinc-900 border-white/10",
   },
 ];
 
-const GLASS_BASE = "backdrop-blur-md border rounded-md shadow-lg";
+const GLASS_BASE = "border rounded-lg";
 
 const CATEGORY_COLORS: Record<string, string> = {
   parties: "bg-pink-500/20 text-pink-300 border-pink-400/30",
@@ -152,10 +152,10 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
   const viewingUserId = targetUserId || user?.id;
 
   const [sections, setSections] = useState<ProfileSection[]>([
-    { id: "top-traits", title: "Top 3 Traits", visible: true },
-    { id: "main-club", title: "Main Club", visible: true },
-    { id: "event-history", title: "Event History", visible: true },
-    { id: "taste-dna", title: "Persona DNA Radar", visible: true },
+    { id: "top-traits", title: "Top interests", visible: true },
+    { id: "main-club", title: "Main club", visible: true },
+    { id: "event-history", title: "Event history", visible: true },
+    { id: "taste-dna", title: "Preferences", visible: true },
   ]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingLayout, setEditingLayout] = useState(false);
@@ -264,7 +264,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
   const currentTheme = THEMES.find((t) => t.id === effectiveTheme) ?? THEMES[0];
   const themeImage = effectiveTheme === "custom" && customThemeImage ? customThemeImage : currentTheme.image;
   const glassClass = effectiveTheme === "custom"
-    ? "bg-white/[0.08] border-white/20"
+    ? "bg-zinc-900 border-white/10"
     : currentTheme.glassColor;
 
   const topTraits = Object.entries(traits)
@@ -299,18 +299,16 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
     "top-traits": () => (
       <div className={cn(GLASS_BASE, glassClass, "p-5")} data-testid="section-top-traits">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="h-4 w-4 text-white/80" />
-          <h2 className="font-semibold text-white">Top 3 Traits</h2>
+          <h2 className="font-semibold text-white">Top interests</h2>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          {topTraits.map(([key, val], idx) => {
+          {topTraits.map(([key, val]) => {
             const color = getTraitColor(val);
             return (
               <div
                 key={key}
                 className="p-3 rounded-md bg-white/[0.06] text-center space-y-1"
               >
-                <span className={cn("text-xs font-bold tabular-nums", color.text)}>#{idx + 1}</span>
                 <div className="text-xs font-medium text-white/60">{TRAIT_LABELS[key]}</div>
                 <div className={cn("text-xl font-bold tabular-nums", color.text)}>
                   {Math.round(val * 100)}%
@@ -337,7 +335,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-4 w-4 text-white/80" />
             <h2 className="font-semibold text-white">
-              {isOwnProfile ? "My Main Club" : `${displayUser?.firstName}'s Main Club`}
+              {isOwnProfile ? "Main club" : `${displayUser?.firstName}'s main club`}
             </h2>
           </div>
           <div className={cn("p-4 rounded-md bg-white/[0.06] border", colorMap[scoreColor])}>
@@ -392,7 +390,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-white/80" />
-              <h2 className="font-semibold text-white">Event History</h2>
+              <h2 className="font-semibold text-white">Event history</h2>
               <span className="text-xs text-white/40">{events.length}</span>
             </div>
             {!isOwnProfile && (
@@ -483,8 +481,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
     "taste-dna": () => (
       <div className={cn(GLASS_BASE, glassClass, "p-5")} data-testid="section-taste-dna">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-4 w-4 text-white/80" />
-          <h2 className="font-semibold text-white">Persona DNA</h2>
+          <h2 className="font-semibold text-white">Preferences</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <RadarChart traits={traits} size={220} />
@@ -523,7 +520,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
         <div className={cn(GLASS_BASE, glassClass, "p-5")} data-testid="section-mutuals">
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-4 w-4 text-white/80" />
-            <h2 className="font-semibold text-white">Mutual Connections</h2>
+            <h2 className="font-semibold text-white">Mutual connections</h2>
             <span className="text-xs text-white/40">{mutuals.length}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -576,16 +573,16 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
     ? sections
     : [
         ...sections,
-        ...(mutuals && mutuals.length > 0 ? [{ id: "mutuals", title: "Mutual Connections", visible: true }] : []),
+        ...(mutuals && mutuals.length > 0 ? [{ id: "mutuals", title: "Mutual connections", visible: true }] : []),
       ];
 
   return (
     <>
-      <div className="fixed inset-0 z-0" style={{ pointerEvents: "none" }}>
+      <div className="fixed inset-0 z-0 bg-zinc-950" style={{ pointerEvents: "none" }}>
         <img
           src={themeImage}
           alt="Theme background"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover opacity-10"
           data-testid="img-theme-background"
         />
         <div className="absolute inset-0 bg-black/20" />
@@ -619,6 +616,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                 variant="ghost"
                 onClick={() => navigate("/")}
                 className="bg-black/30 backdrop-blur-sm text-white border border-white/10"
+                aria-label="Back to profile"
                 data-testid="button-back"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -633,6 +631,8 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                 variant="ghost"
                 onClick={() => setSettingsOpen(!settingsOpen)}
                 className="bg-black/30 backdrop-blur-sm text-white border border-white/10"
+                aria-label="Profile settings"
+                aria-expanded={settingsOpen}
                 data-testid="button-settings"
               >
                 <Settings className="h-4 w-4" />
@@ -642,12 +642,12 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
 
           {settingsOpen && isOwnProfile && (
             <div
-              className={cn(GLASS_BASE, "absolute top-14 right-3 z-30 w-72 p-4 bg-black/40 border-white/20")}
+              className={cn(GLASS_BASE, "absolute top-14 right-3 z-30 w-72 p-4 bg-zinc-900 border-white/10")}
               data-testid="settings-panel"
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-white">Profile Settings</h3>
-                <Button size="icon" variant="ghost" onClick={() => setSettingsOpen(false)} className="text-white/60 h-6 w-6">
+                <h3 className="text-sm font-semibold text-white">Profile settings</h3>
+                <Button aria-label="Close settings" size="icon" variant="ghost" onClick={() => setSettingsOpen(false)} className="text-white/60 h-6 w-6">
                   <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -671,7 +671,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                       >
                         <img src={theme.image} alt={theme.label} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/30 flex items-end justify-center pb-1">
-                          <span className="text-[9px] font-semibold text-white drop-shadow">{theme.label}</span>
+                          <span className="text-[9px] font-semibold text-white">{theme.label}</span>
                         </div>
                         {activeTheme === theme.id && (
                           <div className="absolute top-1 right-1 bg-white rounded-full p-0.5">
@@ -693,7 +693,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                   data-testid="button-custom-theme"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  <span>{customThemeImage ? "Change Custom Image" : "Import Custom Theme"}</span>
+                  <span>{customThemeImage ? "Change image" : "Upload background"}</span>
                   {activeTheme === "custom" && (
                     <Check className="h-3 w-3 ml-auto text-emerald-400" />
                   )}
@@ -709,7 +709,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                     data-testid="button-edit-layout"
                   >
                     <Grip className="h-3.5 w-3.5" />
-                    <span>{editingLayout ? "Done Editing Layout" : "Edit Layout"}</span>
+                    <span>{editingLayout ? "Done" : "Edit layout"}</span>
                   </button>
                 </div>
               </div>
@@ -725,7 +725,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                 </AvatarFallback>
               </Avatar>
               <div className="text-center sm:text-left flex-1 pb-1">
-                <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-lg" data-testid="text-profile-name">
+                <h1 className="text-2xl font-bold tracking-tight text-white" data-testid="text-profile-name">
                   {displayUser?.firstName} {displayUser?.lastName}
                 </h1>
                 <div className="flex flex-wrap gap-1.5 mt-1.5 justify-center sm:justify-start">
@@ -753,7 +753,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
               <div className={cn(GLASS_BASE, "p-4 bg-black/30 border-white/20")} data-testid="section-editor">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs text-white/60">
-                    Reorder or toggle sections to customize your profile
+                    Show or reorder sections
                   </p>
                   <Button
                     size="sm"
@@ -772,6 +772,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                       <Button
                         size="icon"
                         variant="ghost"
+                        aria-label={`Move ${sec.title} up`}
                         onClick={() => moveSection(idx, -1)}
                         disabled={idx === 0}
                         className="text-white/60"
@@ -781,6 +782,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
                       <Button
                         size="icon"
                         variant="ghost"
+                        aria-label={`Move ${sec.title} down`}
                         onClick={() => moveSection(idx, 1)}
                         disabled={idx === sections.length - 1}
                         className="text-white/60"

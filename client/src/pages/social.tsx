@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Users, UserPlus, ChevronDown, Sparkles,
+  Users, UserPlus, ChevronDown, Info,
   Phone, ExternalLink, Share2, Link2, Search,
   Heart, RotateCcw,
 } from "lucide-react";
@@ -127,7 +127,7 @@ function MyFriendsTab() {
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 h-full">
         <Users className="h-12 w-12 text-muted-foreground/30" />
         <p className="text-sm text-muted-foreground text-center">
-          No friends yet. Switch to "Find Friends" to discover people with similar interests.
+          Friend connections are not available yet.
         </p>
       </div>
     );
@@ -490,7 +490,7 @@ function SuggestionCard({
 
         {suggestion.whyMatched.length > 0 && (
           <div className="flex items-start gap-2 text-xs text-white/50">
-            <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/70" />
+            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/70" />
             <span>{suggestion.whyMatched.join(" / ")}</span>
           </div>
         )}

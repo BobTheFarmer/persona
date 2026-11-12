@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Sparkles, ArrowRight, ArrowLeft, Check, ChevronDown,
+  ChevronUp, ArrowRight, ArrowLeft, Check, ChevronDown,
   MoreVertical, RotateCcw, Info,
 } from "lucide-react";
 import {
@@ -211,7 +211,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
     setStep(0);
     setSelections({});
     setShowIntro(true);
-    toast({ title: "Quiz reset", description: "Start fresh!" });
+    toast({ title: "Quiz reset", description: "Your answers have been cleared." });
   }
 
   const progressPercent = ((step + 1) / totalSteps) * 100;
@@ -221,70 +221,15 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
       <div className="min-h-screen bg-background flex flex-col" data-testid="onboarding-page">
         <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center">
-              <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-            </div>
             <span className="font-semibold text-base tracking-tight">Persona</span>
           </div>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-md space-y-6 text-center">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mx-auto">
-              <Sparkles className="h-8 w-8 text-primary" />
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight" data-testid="text-quiz-title">
-                Your interest profile
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Six questions about what you enjoy doing on campus.
-              </p>
-            </div>
-
-            <div className="space-y-4 text-left">
-              <div className="rounded-md border border-border/60 bg-card p-4 space-y-3">
-                <h2 className="text-sm font-semibold">How it works</h2>
-                <div className="space-y-2.5">
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 h-6 w-6 rounded-full bg-emerald-500/15 flex items-center justify-center mt-0.5">
-                      <Sparkles className="h-3 w-3 text-emerald-400" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Each card shows 4 statements. Pick the one <span className="font-semibold text-foreground">MOST</span> like you.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 h-6 w-6 rounded-full bg-rose-500/15 flex items-center justify-center mt-0.5">
-                      <ChevronDown className="h-3 w-3 text-rose-400" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Then pick the one <span className="font-semibold text-foreground">LEAST</span> like you.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center mt-0.5">
-                      <Check className="h-3 w-3 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      No right or wrong answers. Go with your gut.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-md border border-border/60 bg-card p-4">
-                <h2 className="text-sm font-semibold mb-2">Eight preferences</h2>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  {[
-                    "Novelty Seeking", "Social Energy", "Structure & Planning", "Depth & Closeness",
-                    "Creative Expression", "Competitive Drive", "Purpose & Mission", "Comfort w/ Uncertainty"
-                  ].map(t => (
-                    <span key={t} className="text-xs text-muted-foreground">{t}</span>
-                  ))}
-                </div>
-              </div>
+            <div className="space-y-3 text-left">
+              <h1 className="text-2xl font-semibold tracking-tight" data-testid="text-quiz-title">What do you enjoy?</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed">For each of the six questions, choose the statement most like you and the one least like you.</p>
             </div>
 
             <Button
@@ -305,9 +250,6 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
     <div className="min-h-screen bg-background flex flex-col" data-testid="onboarding-page">
       <header className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-primary flex items-center justify-center">
-            <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-          </div>
           <span className="font-semibold text-base tracking-tight">Persona</span>
         </div>
         <DropdownMenu>
@@ -372,10 +314,10 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
                   <button
                     onClick={() => toggleSelection(currentBlock.id, "least", idx)}
                     className={cn(
-                      "shrink-0 flex flex-col items-center justify-center w-14 py-3 rounded-l-md transition-all text-[10px] font-semibold uppercase tracking-wider gap-0.5",
+                      "shrink-0 flex flex-col items-center justify-center w-14 py-3 rounded-l-md transition-all text-xs font-medium gap-0.5",
                       isLeast
                         ? "bg-rose-500/20 text-rose-400"
-                        : "text-muted-foreground/40 hover:text-rose-400/60 hover:bg-rose-500/5"
+                        : "text-muted-foreground hover:text-rose-400/60 hover:bg-rose-500/5"
                     )}
                     data-testid={`button-least-${step}-${idx}`}
                   >
@@ -390,14 +332,14 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
                   <button
                     onClick={() => toggleSelection(currentBlock.id, "most", idx)}
                     className={cn(
-                      "shrink-0 flex flex-col items-center justify-center w-14 py-3 rounded-r-md transition-all text-[10px] font-semibold uppercase tracking-wider gap-0.5",
+                      "shrink-0 flex flex-col items-center justify-center w-14 py-3 rounded-r-md transition-all text-xs font-medium gap-0.5",
                       isMost
                         ? "bg-emerald-500/20 text-emerald-400"
-                        : "text-muted-foreground/40 hover:text-emerald-400/60 hover:bg-emerald-500/5"
+                        : "text-muted-foreground hover:text-emerald-400/60 hover:bg-emerald-500/5"
                     )}
                     data-testid={`button-most-${step}-${idx}`}
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <ChevronUp className="h-4 w-4" />
                     <span>Most</span>
                   </button>
                 </div>
@@ -407,7 +349,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
 
           {!canAdvance && (
             <p className="text-xs text-muted-foreground text-center">
-              Pick one MOST and one LEAST to continue
+              Choose one Most and one Least to continue
             </p>
           )}
 
@@ -427,7 +369,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
               data-testid="button-quiz-next"
             >
               {submitMutation.isPending ? (
-                "Building your profile..."
+                "Saving..."
               ) : isLastStep ? (
                 <>
                   <Check className="h-4 w-4 mr-1" />
@@ -452,22 +394,6 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
               Each question shows four statements. Choose the one most like you and the one least like you. Your choices create an interest profile across eight preferences. This is a recommendation aid, not a validated personality assessment.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium text-foreground">8 Persona Traits:</span>
-              <div className="grid grid-cols-2 gap-1 mt-1.5">
-                {[
-                  "Novelty Seeking", "Social Energy", "Structure & Planning", "Depth & Closeness",
-                  "Creative Expression", "Competitive Drive", "Purpose & Mission", "Comfort w/ Uncertainty"
-                ].map(t => (
-                  <span key={t} className="text-xs">{t}</span>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs">
-              Your results help rank club suggestions. Read the match explanation and club details before deciding what to explore.
-            </p>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

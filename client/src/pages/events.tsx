@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/popover";
 import {
   MapPin, Clock, Users, Hand, ChevronDown,
-  Filter, Tag, Sparkles, AlertCircle, Info,
-  PartyPopper, RotateCcw,
+  Filter, Tag, AlertCircle, Info,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -178,7 +178,7 @@ export default function EventsPage() {
         <div className="space-y-4 text-center">
           <Skeleton className="h-12 w-12 mx-auto rounded-md" />
           <Skeleton className="h-4 w-40 mx-auto" />
-          <p className="text-sm text-muted-foreground">Finding events for you...</p>
+          <p className="text-sm text-muted-foreground">Loading events…</p>
         </div>
       </div>
     );
@@ -216,6 +216,7 @@ export default function EventsPage() {
                 ? "bg-primary/15 text-primary border-primary/30"
                 : "text-muted-foreground border-border/50"
             )}
+            aria-pressed={activeFilters.has(opt.value)}
             data-testid={`button-filter-${opt.value}`}
           >
             {opt.label}
@@ -242,11 +243,9 @@ export default function EventsPage() {
                 isVisible={idx === currentIndex}
               />
             ))}
-            <div className="snap-start w-full h-full relative shrink-0 flex items-center justify-center bg-gradient-to-b from-zinc-900 to-black" data-testid="end-of-events">
+            <div className="snap-start w-full h-full relative shrink-0 flex items-center justify-center bg-zinc-950" data-testid="end-of-events">
               <div className="text-center space-y-4 px-8">
-                <PartyPopper className="h-12 w-12 mx-auto text-primary/60" />
                 <h3 className="text-xl font-bold text-white">You've seen all events</h3>
-                <p className="text-sm text-white/50">Check back later for new happenings around campus</p>
                 <Button
                   variant="outline"
                   className="bg-white/10 text-white border-white/20"
@@ -267,7 +266,7 @@ export default function EventsPage() {
           </div>
 
           {filteredEvents.length > 1 && currentIndex < filteredEvents.length && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 animate-bounce pointer-events-none">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
               <ChevronDown className="h-6 w-6 text-white/60" />
             </div>
           )}
@@ -431,11 +430,10 @@ function EventCard({ event, isVisible }: { event: EventData; isVisible: boolean 
         {event.whyShort && (
           <Popover>
             <PopoverTrigger asChild>
-              <div className="flex items-start gap-2 text-xs text-white/50 cursor-pointer" data-testid={`why-${event.id}`}>
-                <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/70" />
+              <button type="button" className="flex items-start gap-2 text-xs text-left text-white/60 cursor-pointer" data-testid={`why-${event.id}`}>
                 <span>{event.whyShort}</span>
                 <Info className="h-3 w-3 shrink-0 mt-0.5 text-white/30" />
-              </div>
+              </button>
             </PopoverTrigger>
             <PopoverContent side="top" className="max-w-sm bg-zinc-900 text-zinc-100 border-zinc-700 p-3 w-auto" data-testid={`tooltip-why-${event.id}`}>
               <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
@@ -459,7 +457,7 @@ function EventCard({ event, isVisible }: { event: EventData; isVisible: boolean 
             data-testid={`button-rsvp-${event.id}`}
           >
             <Hand className="h-4 w-4 mr-2" />
-            {event.hasRsvpd ? "Going" : "I want to go"}
+            {event.hasRsvpd ? "Going" : "RSVP"}
           </Button>
         </div>
       </div>

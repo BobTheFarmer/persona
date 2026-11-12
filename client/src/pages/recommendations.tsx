@@ -17,7 +17,7 @@ import { type Item } from "@shared/schema";
 import { getClubImage } from "@/lib/club-images";
 import {
   GraduationCap, Briefcase, Users, Trophy, Heart,
-  Bookmark, SkipForward, ThumbsUp, Sparkles, ChevronDown,
+  Bookmark, SkipForward, ThumbsUp, ChevronDown,
   MapPin, Clock, Calendar, DollarSign, ExternalLink,
   ArrowUpDown, SlidersHorizontal, Info,
   SearchX, RotateCcw,
@@ -36,14 +36,6 @@ const DOMAINS: { key: CampusDomain; label: string; icon: typeof GraduationCap }[
   { key: "sports", label: "Sports", icon: Trophy },
   { key: "volunteering", label: "Volunteering", icon: Heart },
 ];
-
-const DOMAIN_GRADIENTS: Record<CampusDomain, string> = {
-  academic: "from-blue-900 via-indigo-900 to-slate-900",
-  professional: "from-slate-800 via-zinc-900 to-neutral-900",
-  social: "from-purple-900 via-fuchsia-900 to-pink-900",
-  sports: "from-green-900 via-emerald-900 to-teal-900",
-  volunteering: "from-amber-900 via-orange-900 to-red-900",
-};
 
 interface ClubMutual {
   id: string;
@@ -72,12 +64,6 @@ interface RecommendedClub extends Item {
 }
 
 type SortMode = "match" | "urgency";
-
-function getScoreColor(score: number) {
-  if (score >= 75) return "green" as const;
-  if (score >= 50) return "yellow" as const;
-  return "grey" as const;
-}
 
 function formatMeetingDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -145,6 +131,7 @@ export default function RecommendationsPage() {
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted/50 text-muted-foreground border-border/50 hover-elevate"
                 )}
+                aria-pressed={isActive}
                 data-testid={`tab-domain-${domain.key}`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -261,7 +248,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
         <div className="space-y-4 text-center">
           <Skeleton className="h-12 w-12 mx-auto rounded-md" />
           <Skeleton className="h-4 w-40 mx-auto" />
-          <p className="text-sm text-muted-foreground">Finding clubs for you...</p>
+          <p className="text-sm text-muted-foreground">Loading clubs…</p>
         </div>
       </div>
     );
@@ -273,7 +260,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
         <Card className="p-8 text-center max-w-sm">
           <div className="text-muted-foreground space-y-2">
             <GraduationCap className="h-10 w-10 mx-auto opacity-30" />
-            <p className="text-sm">No club recommendations yet. Complete your onboarding to get started.</p>
+            <p className="text-sm">No clubs in this selection.</p>
           </div>
         </Card>
       </div>
@@ -291,8 +278,6 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
         data-testid="snap-scroll-container"
       >
         {clubs.map((club, idx) => {
-          const color = getScoreColor(club.matchScore);
-          const domainGradient = DOMAIN_GRADIENTS[(club.domain as CampusDomain)] || DOMAIN_GRADIENTS.academic;
           const isVisible = idx === currentIndex;
           return (
             <div
@@ -306,7 +291,6 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                 className="absolute inset-0 w-full h-full object-cover"
                 loading={idx < 3 ? "eager" : "lazy"}
               />
-              <div className={cn("absolute inset-0 bg-gradient-to-br opacity-40", domainGradient)} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
 
               <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -327,7 +311,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                   </PopoverTrigger>
                   <PopoverContent side="left" className="max-w-xs bg-zinc-900 text-zinc-100 border-zinc-700 p-3 w-auto" data-testid={`tooltip-match-${club.id}`}>
                     <div className="space-y-1.5 text-xs">
-                      {(club.matchMathTooltip || `Score: ${club.matchScore}%\nscoringMethod: ${club.scoringMethod}`).split("\n").map((line, i) => (
+                      {(club.matchMathTooltip || `Match score: ${club.matchScore}%`).split("\n").map((line, i) => (
                         <p key={i} className={i === 0 ? "font-medium text-white" : "text-zinc-300"}>
                           {line}
                         </p>
@@ -353,7 +337,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               )}>
                 <h2
-                  className="font-bold text-white text-2xl sm:text-3xl leading-tight drop-shadow-lg"
+                  className="font-bold text-white text-2xl sm:text-3xl leading-tight"
                   data-testid={`text-club-title-${club.id}`}
                 >
                   {club.title}
@@ -399,13 +383,10 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
 
                 <Popover>
                   <PopoverTrigger asChild>
-                    <div className="flex items-start gap-2 text-xs cursor-pointer" data-testid={`why-${club.id}`}>
-                      <Sparkles className={cn("h-3.5 w-3.5 mt-0.5 shrink-0",
-                        color === "green" ? "text-emerald-400" : color === "yellow" ? "text-amber-400" : "text-zinc-400"
-                      )} />
+                    <button type="button" className="flex items-start gap-2 text-xs text-left cursor-pointer" data-testid={`why-${club.id}`}>
                       <span className="text-white/60">{club.whyShort || club.explanation}</span>
                       <Info className="h-3 w-3 shrink-0 mt-0.5 text-white/30" />
-                    </div>
+                    </button>
                   </PopoverTrigger>
                   <PopoverContent side="top" className="max-w-sm bg-zinc-900 text-zinc-100 border-zinc-700 p-3 w-auto" data-testid={`tooltip-why-${club.id}`}>
                     <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">
@@ -441,6 +422,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                     className="text-white/60"
                     onClick={() => interactMutation.mutate({ itemId: club.id, domain: club.domain, action: "skip" })}
                     disabled={interactMutation.isPending}
+                    aria-label={`Skip ${club.title}`}
                     data-testid={`button-skip-${club.id}`}
                   >
                     <SkipForward className="h-5 w-5" />
@@ -451,6 +433,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                     className="text-white/60"
                     onClick={() => interactMutation.mutate({ itemId: club.id, domain: club.domain, action: "like" })}
                     disabled={interactMutation.isPending}
+                    aria-label={`Like ${club.title}`}
                     data-testid={`button-like-${club.id}`}
                   >
                     <ThumbsUp className="h-5 w-5" />
@@ -461,6 +444,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                     className="text-white/60"
                     onClick={() => interactMutation.mutate({ itemId: club.id, domain: club.domain, action: "save" })}
                     disabled={interactMutation.isPending}
+                    aria-label={`Save ${club.title}`}
                     data-testid={`button-save-${club.id}`}
                   >
                     <Bookmark className="h-5 w-5" />
@@ -472,32 +456,33 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
                     <Button
                       variant="outline"
                       className="bg-white/10 text-white border-white/20 backdrop-blur-sm text-xs"
-                      onClick={() => window.open(club.signupUrl!, "_blank")}
+                      onClick={() => window.open(club.signupUrl!, "_blank", "noopener,noreferrer")}
                       data-testid={`button-signup-${club.id}`}
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                       Sign Up
                     </Button>
                   )}
-                  <Button
+                  {club.instagramUrl && <Button
                     size="icon"
                     variant="outline"
                     className="bg-white/10 text-white border-white/20 backdrop-blur-sm"
-                    onClick={() => window.open("https://instagram.com/therock/", "_blank")}
+                    onClick={() => window.open(club.instagramUrl!, "_blank", "noopener,noreferrer")}
+                    aria-label={`${club.title} on Instagram`}
                     data-testid={`button-instagram-${club.id}`}
                   >
                     <SiInstagram className="h-4 w-4" />
-                  </Button>
+                  </Button>}
                 </div>
               </div>
             </div>
           );
         })}
-        <div className="snap-start w-full h-full relative shrink-0 flex items-center justify-center bg-gradient-to-b from-zinc-900 to-black" data-testid="end-of-clubs">
+        <div className="snap-start w-full h-full relative shrink-0 flex items-center justify-center bg-zinc-950" data-testid="end-of-clubs">
           <div className="text-center space-y-4 px-8">
             <SearchX className="h-12 w-12 mx-auto text-primary/60" />
             <h3 className="text-xl font-bold text-white">You've seen all clubs</h3>
-            <p className="text-sm text-white/50">Explore other categories or check back as new clubs are added</p>
+            <p className="text-sm text-white/50">Try another category.</p>
             <Button
               variant="outline"
               className="bg-white/10 text-white border-white/20"
@@ -518,7 +503,7 @@ function ClubRecommendations({ domains, sortMode }: { domains: CampusDomain[]; s
       </div>
 
       {currentIndex < total && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 animate-bounce pointer-events-none">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-none">
           <ChevronDown className="h-5 w-5 text-white/30" />
         </div>
       )}
