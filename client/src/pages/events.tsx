@@ -42,6 +42,8 @@ interface AttendeePreview {
 
 interface EventData {
   id: string;
+  sourceUrl?: string;
+  recurring?: boolean;
   title: string;
   description: string | null;
   category: string;
@@ -80,6 +82,8 @@ function formatEventDate(dateStr: string | null): string {
   if (!dateStr) return "TBD";
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", {
+    timeZone: "America/Chicago",
+    timeZoneName: "short",
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -403,7 +407,7 @@ function EventCard({ event, isVisible }: { event: EventData; isVisible: boolean 
           )}
           <div className="flex items-center gap-2 text-white/70 text-sm">
             <Users className="h-3.5 w-3.5 shrink-0" />
-            <span>{event.rsvpCount} going</span>
+            <span>{event.rsvpCount} interested on Persona</span>
           </div>
         </div>
 
@@ -443,6 +447,7 @@ function EventCard({ event, isVisible }: { event: EventData; isVisible: boolean 
           </Popover>
         )}
 
+        {event.sourceUrl && <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-white underline underline-offset-4">Official event details ↗</a>}
         <div className="flex items-center gap-2 pt-1">
           <Button
             variant={event.hasRsvpd ? "default" : "outline"}
@@ -457,7 +462,7 @@ function EventCard({ event, isVisible }: { event: EventData; isVisible: boolean 
             data-testid={`button-rsvp-${event.id}`}
           >
             <Hand className="h-4 w-4 mr-2" />
-            {event.hasRsvpd ? "Going" : "RSVP"}
+            {event.hasRsvpd ? "Interested" : "Interested?"}
           </Button>
         </div>
       </div>

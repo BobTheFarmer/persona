@@ -1,0 +1,230 @@
+[
+  {
+    "slug": "aggiecodingclub",
+    "title": "Aggie Coding Club",
+    "domain": "academic",
+    "description": "Coding workshops, student projects, company talks and socials.",
+    "url": "https://getinvolved.tamu.edu/org/aggiecodingclub",
+    "tags": [
+      "coding",
+      "projects",
+      "technology"
+    ]
+  },
+  {
+    "slug": "adsc",
+    "title": "Aggie Data Science Club",
+    "domain": "academic",
+    "description": "Data science and machine learning workshops, projects and professional talks.",
+    "url": "https://getinvolved.tamu.edu/org/adsc",
+    "tags": [
+      "data science",
+      "machine learning",
+      "projects"
+    ]
+  },
+  {
+    "slug": "cybr",
+    "title": "Texas A&M Cybersecurity Club",
+    "domain": "professional",
+    "description": "Cybersecurity learning, industry networking and guest speakers.",
+    "url": "https://getinvolved.tamu.edu/org/cybr",
+    "tags": [
+      "cybersecurity",
+      "technology",
+      "networking"
+    ]
+  },
+  {
+    "slug": "swe",
+    "title": "Society of Women Engineers",
+    "domain": "professional",
+    "description": "Engineering mentorship, professional development, outreach and community events.",
+    "url": "https://getinvolved.tamu.edu/org/swe",
+    "tags": [
+      "engineering",
+      "mentoring",
+      "service"
+    ]
+  },
+  {
+    "slug": "chess",
+    "title": "Texas A&M Chess Club",
+    "domain": "social",
+    "description": "Casual chess, club tournaments and social events, with opportunities for competition.",
+    "url": "https://getinvolved.tamu.edu/org/chess",
+    "tags": [
+      "chess",
+      "strategy",
+      "games"
+    ]
+  },
+  {
+    "slug": "tabletop",
+    "title": "Texas A&M Tabletop Troupe",
+    "domain": "social",
+    "description": "Board games and tabletop role-playing games with fellow students.",
+    "url": "https://getinvolved.tamu.edu/org/tabletop",
+    "tags": [
+      "board games",
+      "roleplaying",
+      "social"
+    ]
+  },
+  {
+    "slug": "magic",
+    "title": "The Aggie Magic Circle",
+    "domain": "social",
+    "description": "Learn, discuss and practice magic as an art and form of entertainment.",
+    "url": "https://getinvolved.tamu.edu/org/magic",
+    "tags": [
+      "magic",
+      "performance",
+      "creative"
+    ]
+  },
+  {
+    "slug": "speech-and-debate",
+    "title": "Texas A&M Speech and Debate Team",
+    "domain": "academic",
+    "description": "Speech and debate practice and tournaments; prior experience is not required.",
+    "url": "https://getinvolved.tamu.edu/org/speech-and-debate",
+    "tags": [
+      "debate",
+      "public speaking",
+      "competition"
+    ]
+  },
+  {
+    "slug": "ao",
+    "title": "Aggie Outdoors",
+    "domain": "social",
+    "description": "Outdoor experiences, environmental service and student leadership.",
+    "url": "https://getinvolved.tamu.edu/org/ao",
+    "tags": [
+      "outdoors",
+      "service",
+      "nature"
+    ]
+  },
+  {
+    "slug": "aggiecamping",
+    "title": "Aggie Camping",
+    "domain": "social",
+    "description": "Camping, hiking and other outdoor activities alongside community service.",
+    "url": "https://getinvolved.tamu.edu/org/aggiecamping",
+    "tags": [
+      "camping",
+      "hiking",
+      "nature"
+    ]
+  },
+  {
+    "slug": "cycling",
+    "title": "Texas A&M Cycling Team",
+    "domain": "sports",
+    "description": "Bicycle racing and a community for collegiate cycling.",
+    "url": "https://getinvolved.tamu.edu/org/cycling",
+    "tags": [
+      "cycling",
+      "fitness",
+      "outdoors"
+    ]
+  },
+  {
+    "slug": "adt",
+    "title": "Texas A&M Aggie Dance Team",
+    "domain": "sports",
+    "description": "Dance performances at university sporting events and collegiate competition.",
+    "url": "https://getinvolved.tamu.edu/org/adt",
+    "tags": [
+      "dance",
+      "performance",
+      "competition"
+    ]
+  },
+  {
+    "slug": "das",
+    "title": "Dance Arts Society",
+    "domain": "social",
+    "description": "Student choreography and performances in a range of dance styles.",
+    "url": "https://getinvolved.tamu.edu/org/das",
+    "tags": [
+      "dance",
+      "choreography",
+      "creative"
+    ]
+  },
+  {
+    "slug": "tambda",
+    "title": "Texas A&M Ballroom Dance Association",
+    "domain": "social",
+    "description": "Ballroom dance lessons, practices and socials, with a competitive team.",
+    "url": "https://getinvolved.tamu.edu/org/tambda",
+    "tags": [
+      "dance",
+      "music",
+      "social"
+    ]
+  },
+  {
+    "slug": "maaya",
+    "title": "TAMU Maaya",
+    "domain": "social",
+    "description": "Competitive Bollywood dance blending classical and contemporary styles.",
+    "url": "https://getinvolved.tamu.edu/org/maaya",
+    "tags": [
+      "dance",
+      "culture",
+      "competition"
+    ]
+  },
+  {
+    "slug": "salsafusion",
+    "title": "Salsa Fusion Latin Dance Company",
+    "domain": "social",
+    "description": "Salsa and Bachata lessons, social dancing and performance teams.",
+    "url": "https://getinvolved.tamu.edu/org/salsafusion",
+    "tags": [
+      "dance",
+      "culture",
+      "social"
+    ]
+  },
+  {
+    "slug": "replant",
+    "title": "Aggie Replant",
+    "domain": "volunteering",
+    "description": "Environmental service and community tree planting in Bryan and College Station.",
+    "url": "https://getinvolved.tamu.edu/org/replant",
+    "tags": [
+      "environment",
+      "trees",
+      "service"
+    ]
+  },
+  {
+    "slug": "aggieecoreps",
+    "title": "Aggie Eco-Representatives",
+    "domain": "volunteering",
+    "description": "Campus sustainability education, events and service through Residence Life.",
+    "url": "https://getinvolved.tamu.edu/org/aggieecoreps",
+    "tags": [
+      "sustainability",
+      "environment",
+      "service"
+    ]
+  },
+  {
+    "slug": "tamect",
+    "title": "Texas A&M University Emergency Care Team",
+    "domain": "volunteering",
+    "description": "Student volunteers learn emergency care and support first aid alongside TAMU EMS.",
+    "url": "https://getinvolved.tamu.edu/org/tamect",
+    "tags": [
+      "first aid",
+      "health",
+      "service"
+    ]
+  }
+]

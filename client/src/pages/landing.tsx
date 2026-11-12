@@ -22,9 +22,8 @@ export default function LandingPage() {
       <main className="flex-1 w-full max-w-5xl mx-auto px-6 py-16 sm:py-28">
         <section className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div>
-        <p className="text-sm text-muted-foreground mb-4">Texas A&amp;M student clubs</p>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight leading-tight max-w-2xl">Find your next club.</h1>
-        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg mt-6">Answer six questions, browse clubs that fit your interests, and save your favorites.</p>
+        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg mt-6">Answer our quick six-question personality quiz and browse Texas A&amp;M clubs that fit your unique interests!</p>
         <Button asChild size="lg" className="mt-8" data-testid="button-get-started"><a href="/api/login">Get started</a></Button>
         </div>
         <figure aria-label="Example Persona DNA chart" className="min-w-0" data-testid="landing-dna-chart">

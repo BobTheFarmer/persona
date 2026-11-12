@@ -127,8 +127,9 @@ function MyFriendsTab() {
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 h-full">
         <Users className="h-12 w-12 text-muted-foreground/30" />
         <p className="text-sm text-muted-foreground text-center">
-          Friend connections are not available yet.
+          Friend connections are not available yet. Find people through a club or campus event in the meantime.
         </p>
+        <div className="flex flex-wrap justify-center gap-3"><Link href="/recommendations" className="rounded-md border px-4 py-2 text-sm">Browse clubs</Link><Link href="/events" className="rounded-md border px-4 py-2 text-sm">See campus events</Link></div>
       </div>
     );
   }
@@ -299,7 +300,7 @@ function DiscoverTab() {
       <div className="flex flex-col items-center justify-center gap-3 p-8 h-full">
         <UserPlus className="h-12 w-12 text-muted-foreground/30" />
         <p className="text-sm text-muted-foreground text-center">
-          No new suggestions right now. Check back later as more people join.
+          No people to suggest yet. Browse clubs and events to find your community.
         </p>
       </div>
     );

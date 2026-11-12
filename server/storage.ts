@@ -1,3 +1,5 @@
+import { clubIds, scheduledCampusEvents } from "./campus-catalog";
+import { syncCampusCatalog } from "./catalog-sync";
 import {
   type TasteProfile, type InsertTasteProfile,
   type Item, type InsertItem,
@@ -86,15 +88,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getItemsByDomain(domain: string): Promise<Item[]> {
-    return db.select().from(items).where(eq(items.domain, domain));
+    return db.select().from(items).where(and(eq(items.domain, domain), inArray(items.id, clubIds)));
   }
 
   async getItemById(id: string): Promise<Item | undefined> {
+    if (!clubIds.includes(id)) return undefined;
     const [item] = await db.select().from(items).where(eq(items.id, id));
     return item;
   }
 
   async getItemsByIds(ids: string[]): Promise<Item[]> {
+    ids = ids.filter(id=>clubIds.includes(id));
     if (ids.length === 0) return [];
     return db.select().from(items).where(inArray(items.id, ids));
   }
@@ -153,10 +157,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEvents(category?: string): Promise<Event[]> {
-    if (category) {
-      return db.select().from(events).where(eq(events.category, category));
-    }
-    return db.select().from(events);
+    await syncCampusCatalog();
+    const validIds = scheduledCampusEvents().map(e=>e.id);
+    if (!validIds.length) return [];
+    const criteria = category ? and(inArray(events.id, validIds),eq(events.category,category)) : inArray(events.id,validIds);
+    return db.select().from(events).where(criteria).orderBy(events.dateTime);
   }
 
   async getEventById(id: string): Promise<Event | undefined> {

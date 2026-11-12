@@ -1,3 +1,4 @@
+import { clubIds, eventSource } from "./campus-catalog";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -572,7 +573,7 @@ export async function registerRoutes(
       const myClubIds = new Set(myInteractions.filter(i => i.action === "like" || i.action === "love" || i.action === "save").map(i => i.itemId));
       const myEventIds = new Set(myRsvps.map(r => r.eventId));
 
-      const allItems = await db.select().from(itemsTable);
+      const allItems = (await db.select().from(itemsTable)).filter(item=>clubIds.includes(item.id));
       const allEvents = await storage.getEvents();
       const itemMap = new Map(allItems.map(i => [i.id, i]));
       const eventMap = new Map(allEvents.map(e => [e.id, e]));
@@ -639,7 +640,7 @@ export async function registerRoutes(
       const myEventIds = new Set(myRsvps.map(r => r.eventId));
 
       const usersWithProfiles = await storage.getUsersWithProfiles(userId);
-      const allItems = await db.select().from(itemsTable);
+      const allItems = (await db.select().from(itemsTable)).filter(item=>clubIds.includes(item.id));
       const allEvents = await storage.getEvents();
       const itemMap = new Map(allItems.map(i => [i.id, i]));
       const eventMap = new Map(allEvents.map(e => [e.id, e]));
@@ -767,6 +768,7 @@ export async function registerRoutes(
 
         return {
           ...event,
+          ...eventSource(event.id),
           matchScore,
           predictedEnjoyment,
           distanceBucket,
@@ -1550,7 +1552,7 @@ export async function registerRoutes(
         } else if (cat === "campus") {
           whyShort = mutualFriendsGoingCount > 0
             ? `${mutualFriendsGoingCount} friends going + campus community event`
-            : personaScore >= 70 ? "Strong match to your campus interests" : "Popular campus event near you";
+            : personaScore >= 70 ? "Strong match to your campus interests" : "Campus event near you";
         } else {
           if (overlappingTraits.length > 0) {
             whyShort = `Matches your ${overlappingTraits.join(" + ")} energy`;
@@ -1585,6 +1587,7 @@ export async function registerRoutes(
 
         return {
           id: event.id,
+          ...eventSource(event.id),
           title: event.title,
           description: event.description,
           category: event.category,
@@ -1635,7 +1638,7 @@ export async function registerRoutes(
       const profile = await storage.getTasteProfile(userId);
 
       const allEvents = await storage.getEvents();
-      const allItems = await db.select().from(itemsTable);
+      const allItems = (await db.select().from(itemsTable)).filter(item=>clubIds.includes(item.id));
 
       const now = new Date();
       const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
@@ -1675,6 +1678,7 @@ export async function registerRoutes(
         return {
           type: "event" as const,
           id: event.id,
+          ...eventSource(event.id),
           title: event.title,
           category: event.category,
           location: event.location,

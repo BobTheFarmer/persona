@@ -13,7 +13,7 @@ export default function AboutPage() {
       </section>
       <section className="mt-8 border-t border-border pt-6" data-testid="section-technicals">
         <h2 className="font-semibold">A few things to know</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mt-2">The club list needs updating, so check meeting times with the club. Friends aren’t available yet.</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">Clubs and recurring events link to TAMU’s official listings. Dates stop at the published schedule; check the organizer’s page before heading out. Friends aren’t available yet.</p>
       </section>
     </div>
   );
