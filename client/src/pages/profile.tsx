@@ -155,7 +155,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
     { id: "top-traits", title: "Top interests", visible: true },
     { id: "main-club", title: "Main club", visible: true },
     { id: "event-history", title: "Event history", visible: true },
-    { id: "taste-dna", title: "Preferences", visible: true },
+    { id: "taste-dna", title: "Persona DNA", visible: true },
   ]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingLayout, setEditingLayout] = useState(false);
@@ -481,7 +481,7 @@ export default function ProfilePage({ params }: { params?: { userId?: string } }
     "taste-dna": () => (
       <div className={cn(GLASS_BASE, glassClass, "p-5")} data-testid="section-taste-dna">
         <div className="flex items-center gap-2 mb-4">
-          <h2 className="font-semibold text-white">Preferences</h2>
+          <h2 className="font-semibold text-white">Persona DNA</h2>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <RadarChart traits={traits} size={220} />

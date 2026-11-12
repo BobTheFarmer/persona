@@ -92,7 +92,6 @@ function AuthenticatedApp() {
 
   return (
     <div className={`min-h-screen flex flex-col ${isProfilePage ? "" : "bg-background"}`}>
-      <div className="bg-muted text-muted-foreground px-4 py-2 text-xs text-center border-b border-border">Club details may be outdated. Confirm with the organization.</div>
       <header className={`flex items-center justify-between gap-4 px-4 py-2 border-b border-border/50 h-14 shrink-0 sticky top-0 z-40 ${isProfilePage ? "bg-black/30 backdrop-blur-xl border-white/10" : "bg-background/80 backdrop-blur-xl"}`}>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer outline-none" data-testid="button-persona-menu">

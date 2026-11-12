@@ -3,7 +3,7 @@ import { User, GraduationCap, Users, CalendarDays, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { title: "Profile", href: "/", icon: User },
+  { title: "My DNA", href: "/", icon: User },
   { title: "Clubs", href: "/recommendations", icon: GraduationCap },
   { title: "Maps", href: "/explore", icon: Map },
   { title: "Events", href: "/events", icon: CalendarDays },

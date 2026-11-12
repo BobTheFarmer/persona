@@ -228,7 +228,7 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-md space-y-6 text-center">
             <div className="space-y-3 text-left">
-              <h1 className="text-2xl font-semibold tracking-tight" data-testid="text-quiz-title">What do you enjoy?</h1>
+              <h1 className="text-2xl font-semibold tracking-tight" data-testid="text-quiz-title">Build your Persona DNA</h1>
               <p className="text-muted-foreground text-sm leading-relaxed">For each of the six questions, choose the statement most like you and the one least like you.</p>
             </div>
 
@@ -389,9 +389,9 @@ export default function OnboardingPage({ onComplete }: OnboardingProps) {
       <Dialog open={showProjectDetails} onOpenChange={setShowProjectDetails}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>About your interest profile</DialogTitle>
+            <DialogTitle>About your Persona DNA</DialogTitle>
             <DialogDescription>
-              Each question shows four statements. Choose the one most like you and the one least like you. Your choices create an interest profile across eight preferences. This is a recommendation aid, not a validated personality assessment.
+              Each question shows four statements. Choose the one most like you and the one least like you. Your choices create an interest profile across eight preferences.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>

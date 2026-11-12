@@ -8,13 +8,12 @@ export default function AboutPage() {
       <h1 className="text-3xl font-semibold tracking-tight">About Persona</h1>
       <p className="mt-5 text-muted-foreground leading-relaxed">A campus club finder made by Andy, Colin, Devon, and Garv.</p>
       <section className="mt-8 border-t border-border pt-6" data-testid="section-persona-dna">
-        <h2 className="font-semibold">Recommendations</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mt-2">Your quiz answers help rank clubs by shared interests. Scores are suggestions, not a personality assessment or a guarantee of fit.</p>
+        <h2 className="font-semibold">Your Persona DNA</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">Your quiz answers form the DNA chart on your profile and help rank clubs by shared interests.</p>
       </section>
       <section className="mt-8 border-t border-border pt-6" data-testid="section-technicals">
-        <h2 className="font-semibold">Prototype limitations</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed mt-2">Club information may be outdated. Confirm meetings and membership details with the organization. Friend connections are unavailable, and event listings depend on available data.</p>
-        <p className="text-sm text-muted-foreground leading-relaxed mt-3">Persona is not affiliated with Texas A&amp;M. Accounts are not university-verified.</p>
+        <h2 className="font-semibold">A few things to know</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">The club list needs updating, so check meeting times with the club. Friends aren’t available yet.</p>
       </section>
     </div>
   );
